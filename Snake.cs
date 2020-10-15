@@ -22,15 +22,15 @@ namespace SnakeGame
             Console.SetBufferSize(x + 1, y + 1);        // устанавливает размер буфера (убирает панель прокрутки)
             Console.CursorVisible = false;              // скрываем курсор
 
-            walls = new Walls(x, y, '#');
+            walls = new Walls(x, y, '.');
             snake = new Snake(x / 2, y / 3, 3);         // создаем объект змейки в центре поля и в длину 3 элемента
 
-            foodFactory = new FoodFactory(x, y, '+');   // инициализация объекта еды координатами и символом
+            foodFactory = new FoodFactory(x, y, '@');   // инициализация объекта еды координатами и символом
             foodFactory.CreateFood();                   // добавляет еду для змейки
 
 
-            time = new Timer(Loop, null, 0, 200);
-
+            time = new Timer(Loop, null, 0, 150);
+                        
             while (true)
             {
                 if (Console.KeyAvailable)
@@ -39,6 +39,8 @@ namespace SnakeGame
                     snake.Rotation(key.Key);
                 }
             }
+
+
         }
         static void Loop(object obj)
         {
@@ -139,7 +141,7 @@ namespace SnakeGame
             snake = new List<Point>();
             for (int i = x - length; i < x; i++)
             {
-                Point p = (i, y, '*');
+                Point p = (i, y, 'o');
                 snake.Add(p);
                 p.Draw();
             }
@@ -147,6 +149,7 @@ namespace SnakeGame
         public Point GetHead() => snake.Last();                  // голова принимает последний элемент последовательности
         public void Move()                                       // метод движения      
         {
+            Console.ForegroundColor = ConsoleColor.Green;        // раскрас тела змейки   
             head = GetNextPoint();                               // голова принимает значение следующей точки координат
             snake.Add(head);                                     // добавление символа головы
 
@@ -163,7 +166,7 @@ namespace SnakeGame
             head = GetNextPoint();
             if (head == p)
             {
-                snake.Add(head);
+                snake.Add(head);                
                 head.Draw();
                 return true;
             }
@@ -227,7 +230,8 @@ namespace SnakeGame
 
         public void CreateFood()                                                // рисует еду в рандомных точках
         {
-            food = (random.Next(2, x - 2), random.Next(2, y - 2), ch);
+            food = (random.Next(1, 79), random.Next(1, 25), ch);
+            Console.ForegroundColor = ConsoleColor.Red;                         // меняем цвет еды
             food.Draw();
         }
     }
