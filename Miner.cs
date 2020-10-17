@@ -29,7 +29,7 @@ namespace Miner
             map = new int[SizeMapHeight, SizeMapWidth];
         }
         public Map():this(9, 9, 10) { }
-        public void Initial(Point point)//point - first move
+        public void Initial(Point point)//point - координата первого хода //растановка бомб
         {
             Random rand = new Random();
             Point tempPoint = new Point();
@@ -37,16 +37,16 @@ namespace Miner
             {
                 do
                 {
-                    tempPoint.Number = rand.Next(0, SizeMapHeight - 1);
-                    tempPoint.Letter = rand.Next(0, SizeMapWidth - 1);
+                    tempPoint.Number = rand.Next(SizeMapHeight);
+                    tempPoint.Letter = rand.Next(SizeMapWidth);
                 } while (map[tempPoint.Number, tempPoint.Letter] == -1 || tempPoint.ToString().Equals(point.ToString()));
                 map[tempPoint.Number, tempPoint.Letter] = -1;
             }
             CountCellBomb();
         }
-        private void CountCellBomb()
+        private void CountCellBomb()//заполнение карты цифрами подсчета количества бомб вокруг ячейки
         {
-            for (int i = 0; i < SizeMapHeight; i++)
+            for (int i = 0; i < SizeMapHeight; i++)//поиск ячейки с бомбой
             {
                 for (int j = 0; j < SizeMapWidth; j++)
                 {
@@ -57,7 +57,7 @@ namespace Miner
                 }
             }
         }
-        private void CountBombs(Point point)
+        private void CountBombs(Point point)//проход ячеек вокруг бомбы с увеличением числа всех смежных ячеек на 1
         {
             for (int i = point.Number - 1; i < point.Number + 2; i++)
             {
@@ -68,49 +68,61 @@ namespace Miner
                         if (map[i, j] != -1)
                         {
                             (map[i, j])++;
-                            //map[i, j] = map[i, j] + 1;
                         }
                     }
                 }
             }
         }
-        private bool IsInBorder(Point point)
+        private bool IsInBorder(Point point)//проверка граници поля (для исключения изменения ячейки)
         {
-            if (point.Number < 0 || point.Letter < 0 || point.Number > SizeMapHeight || point.Letter > SizeMapWidth)
+            if (point.Number < 0 || point.Letter < 0 || point.Number > SizeMapHeight - 1 || point.Letter > SizeMapWidth - 1)
             {
-                return false;
+                return false;//точка вне границ заданого поля
             }
-            return true;
+            return true;//точка в границах заданого поля
         }
-        public void Show()
+        public void Show()//отрисовка поля с минами
         {
-            if (SizeMapHeight > 9) Console.Write(" ");
-            Console.Write("   ");
-            for (int i = 0; i < SizeMapWidth; i++)
-            {
-                Console.Write($"{(char)(i + 97)} ");//literals: a,b,c,d...
-            }
-            Console.WriteLine(" ");
-            ShowHorizontalLine();
+            ShowBorderLetters();
+            ShowHorizontalBorder();
             for (int i = 0; i < SizeMapHeight; i++)
             {
-                if (SizeMapHeight > 9 && i < 9) Console.Write(" ");
-                Console.Write($"{i + 1}| ");
+                ShowLeftBorder(i);
                 for (int j = 0; j < SizeMapWidth; j++)
                 {
                     Console.Write(GetSymbol(map[i, j]) + " ");
+                    if (SizeMapWidth > 26) Console.Write(" ");
                 }
                 Console.WriteLine("|");
             }
-            ShowHorizontalLine();
+            ShowHorizontalBorder();
         }
-        private void ShowHorizontalLine()
+        private void ShowLeftBorder(int indexRow)//
+        {
+            if (SizeMapHeight > 9 && indexRow < 9) Console.Write(" ");//если число строк двухзначное и номер строки меньше "10" добавляем пустую ячейку
+            Console.Write($"{indexRow + 1}| ");
+        }
+        private void ShowBorderLetters()//отрисовка верхней линии с метками столбцов (буквы)
+        {
+            if (SizeMapHeight > 9) Console.Write(" ");
+            Console.Write("  ");
+            for (int i = 0; i < SizeMapWidth; i++)
+            {
+                if (i < 26) Console.Write(" ");
+                else Console.Write((char)('a' + (i) / 26 - 1));
+                Console.Write((char)('a' + i % 26));//literals: a,b,c,d...
+                if (SizeMapWidth > 26) Console.Write(" ");
+            }
+            Console.WriteLine(" ");
+        }
+        private void ShowHorizontalBorder()
         {
             if (SizeMapHeight > 9) Console.Write(" ");
             Console.Write(" +-");
             for (int i = 0; i < SizeMapWidth; i++)
             {
                 Console.Write("--");
+                if (SizeMapWidth > 26) Console.Write("-");
             }
             Console.WriteLine("+");
         }
@@ -141,6 +153,36 @@ namespace Miner
         public override string ToString()
         {
             return $"{Number},{Letter}";
+        }
+    }
+    public static class Menu
+    {
+        public static Point EnterPoint(int sizeMapHeight, int SizeMapWidth)//ввод с клавиатуры координаты ячейки на поле Мар
+        {
+            Point point = new Point();
+            string str;//строка для обработки
+            int index = -1;//позиция в строке разделителя координат ','
+            int number = sizeMapHeight + 1;//координата по высоте
+            int letter = SizeMapWidth + 1;//координата в ширину (буква)
+            do
+            {
+                Console.WriteLine("Введите координаты точки (пример 9,c)");
+                str = Console.ReadLine();
+                index = str.IndexOf(',');
+                if (index != -1)
+                {
+                    int.TryParse(str.Substring(0, index), out number);
+
+                    if (SizeMapWidth < 27 || str.Substring(index + 1).Length == 1) 
+                    {
+                        letter = str.ToLower()[index + 1] - 'a' + 1;
+                    }
+                    else letter = (str.ToLower()[index + 1] - 'a' + 1) * 26 + str.ToLower()[index + 2] - 'a' + 1;
+                }
+            } while (index == -1 || number > sizeMapHeight || letter > SizeMapWidth || number < 1 || letter < 1);
+            point.Number = number;
+            point.Letter = letter;
+            return point;
         }
     }
 }
