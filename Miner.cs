@@ -13,7 +13,110 @@ namespace Miner
         Map mines;//'*' = -1 - mine, '^' = -2 - flag, 1,2,3,4,5,6,7,8 - numbers
         Map map;
         public int AmountOfMines { get; set; }
-        
+        public Miner()
+        {
+            SizeMapHeight = 8;
+            SizeMapWidth = 8;
+            AmountOfMines = 10;
+        }
+        private void Initial()
+        {
+            mines = new Map(SizeMapHeight, SizeMapWidth, AmountOfMines);
+            map = new Map(SizeMapHeight, SizeMapWidth, AmountOfMines);
+        }
+        public void Start()
+        {
+            bool endGame = false;
+            bool bombed = false;
+            Point point = new Point();
+            bool firstMove = true;
+            do
+            {
+                Initial();
+                endGame = false;
+                bombed = false;
+                firstMove = true;
+                do
+                {
+                    Console.Clear();
+                    map.Show();
+                    point = Menu.EnterPoint(SizeMapHeight, SizeMapWidth);
+                    if (Menu.ChooseActionOnCell() == 1)
+                    {
+                        if (firstMove)
+                        {
+                            mines.InitialBombs(point);
+                            firstMove = false;
+                        }
+                        bombed = OpenCell(point);
+                    }
+                    else
+                    {
+                        map[point] = -2;
+                    }
+                    if (bombed)
+                    {
+                        Console.WriteLine("Поражение!!!");
+                        endGame = true;
+                    }
+                    else if (CheckWin(map))
+                    {
+                        Console.WriteLine("Победа!!!");
+                        endGame = true;
+                    }
+                } while (!endGame);
+            } while (!Menu.ChooseExit());
+        }
+        private bool OpenCell(Point point)//открытие ячеек,если бомба, тогда возврат true
+        {
+            map[point] = mines[point];
+            if (mines[point] == -1)
+            {
+                return true;
+            }
+            else if (mines[point] == 0) OpenCellWithNull(point);
+            return false;
+        }
+        private void OpenCellWithNull(Point point)//открытие всех пустых смежных ячеек
+        {
+            if (mines[point] == 0)
+            {
+                map[point] = 0;
+                mines[point] = -3;
+                for (int i = point.Number - 1; i < point.Number + 2; i++)
+                {
+                    for (int j = point.Letter - 1; j < point.Letter + 2; j++)
+                    {
+                        if (mines.IsInBorder(new Point(i, j)) && mines[new Point(i, j)] != -3) 
+                        {
+                            OpenCellWithNull(new Point(i, j));
+                        }
+                    }
+                }
+            }
+            map[point] = mines[point];
+        }
+        private bool CheckWin(Map map)//проверка окончание игры победой
+        {
+            int CountFlags = 0;
+            int CountEmptyCells = 0;
+            for (int i = 0; i < SizeMapHeight; i++)//проход всех ячеек
+            {
+                for (int j = 0; j < SizeMapWidth; j++)
+                {
+                    if (map[i, j] == -2)
+                    {
+                        CountFlags++;
+                    }
+                    else if(map[i, j] == 0)
+                    {
+                        CountEmptyCells++;
+                    }
+                }
+            }
+            if (CountFlags == map.AmountOfMines && CountEmptyCells == 0) return true;
+            return false;
+        }
     }
     public class Map
     {
@@ -29,7 +132,7 @@ namespace Miner
             map = new int[SizeMapHeight, SizeMapWidth];
         }
         public Map():this(9, 9, 10) { }
-        public void Initial(Point point)//point - координата первого хода //растановка бомб
+        public void InitialBombs(Point point)//point - координата первого хода //растановка бомб
         {
             Random rand = new Random();
             Point tempPoint = new Point();
@@ -39,7 +142,7 @@ namespace Miner
                 {
                     tempPoint.Number = rand.Next(SizeMapHeight);
                     tempPoint.Letter = rand.Next(SizeMapWidth);
-                } while (map[tempPoint.Number, tempPoint.Letter] == -1 || tempPoint.ToString().Equals(point.ToString()));
+                } while (map[tempPoint.Number, tempPoint.Letter] == -1 || tempPoint.Equals(point));
                 map[tempPoint.Number, tempPoint.Letter] = -1;
             }
             CountCellBomb();
@@ -73,7 +176,7 @@ namespace Miner
                 }
             }
         }
-        private bool IsInBorder(Point point)//проверка граници поля (для исключения изменения ячейки)
+        public bool IsInBorder(Point point)//проверка граници поля (для исключения изменения ячейки)
         {
             if (point.Number < 0 || point.Letter < 0 || point.Number > SizeMapHeight - 1 || point.Letter > SizeMapWidth - 1)
             {
@@ -97,7 +200,7 @@ namespace Miner
             }
             ShowHorizontalBorder();
         }
-        private void ShowLeftBorder(int indexRow)//
+        private void ShowLeftBorder(int indexRow)//отрисовка левой границы поля (с цифрами)
         {
             if (SizeMapHeight > 9 && indexRow < 9) Console.Write(" ");//если число строк двухзначное и номер строки меньше "10" добавляем пустую ячейку
             Console.Write($"{indexRow + 1}| ");
@@ -135,9 +238,33 @@ namespace Miner
                 case -2:
                     return '^';//flag
                 case 0:
+                case -3:
                     return ' ';//empty
                 default:
                     return (char) (positionMap + 48);//1,2,3,4,5,6,7,8
+            }
+        }
+        public int this[int i, int j]//доступ к ячейке поля
+        {
+            get
+            {
+                return map[i, j];
+            }
+            set
+            {
+                if (i < 0 || i >= SizeMapHeight || j < 0 || j >= SizeMapWidth) throw new IndexOutOfRangeException();
+                map[i, j] = value;
+            }
+        }
+        public int this[Point point]//доступ к ячейке поля
+        {
+            get
+            {
+                return map[point.Number, point.Letter];
+            }
+            set
+            {
+                map[point.Number, point.Letter] = value;
             }
         }
     }
@@ -153,6 +280,22 @@ namespace Miner
         public override string ToString()
         {
             return $"{Number},{Letter}";
+        }
+        public override bool Equals(object obj)
+        {
+            return this.ToString().Equals(obj.ToString());
+        }
+        public override int GetHashCode()
+        {
+            return this.ToString().GetHashCode();
+        }
+        public static bool operator ==(Point p1, Point p2)
+        {
+            return p1.Equals(p2);
+        }
+        public static bool operator !=(Point p1, Point p2)
+        {
+            return !(p1 == p2);
         }
     }
     public static class Menu
@@ -172,17 +315,41 @@ namespace Miner
                 if (index != -1)
                 {
                     int.TryParse(str.Substring(0, index), out number);
-
-                    if (SizeMapWidth < 27 || str.Substring(index + 1).Length == 1) 
+                    if (SizeMapWidth < 27 || str.Substring(index + 1).Length == 1) // если размер карты в ширину меньше количества букв или если ввели только 1 букву
                     {
-                        letter = str.ToLower()[index + 1] - 'a' + 1;
+                        letter = str.ToLower()[index + 1] - 'a' + 1;//переводим буквенный ввод (1 буква) в число
                     }
-                    else letter = (str.ToLower()[index + 1] - 'a' + 1) * 26 + str.ToLower()[index + 2] - 'a' + 1;
+                    else letter = (str.ToLower()[index + 1] - 'a' + 1) * 26 + str.ToLower()[index + 2] - 'a' + 1;//переводим буквенный ввод (2 буквы) в число
                 }
             } while (index == -1 || number > sizeMapHeight || letter > SizeMapWidth || number < 1 || letter < 1);
-            point.Number = number;
-            point.Letter = letter;
+            point.Number = number - 1;
+            point.Letter = letter - 1;
             return point;
+        }
+        public static int ChooseActionOnCell()//выбор действия для ячейки
+        {
+            int action = 0;
+            do
+            {
+                Console.WriteLine("Введите:\n" +
+                    "1 - открыть ячейку\n" +
+                    "2 - поставить флаг на бомбу (^)");
+                int.TryParse(Console.ReadLine(), out action);
+            } while (action < 1 || action > 2);
+            return action;
+        }
+        public static bool ChooseExit()//проверка выхода из игры
+        {
+            int action = 0;
+            do
+            {
+                Console.WriteLine("\nВведите:\n" +
+                    "1 - начать заного\n" +
+                    "2 - завершить игру");
+                int.TryParse(Console.ReadLine(), out action);
+            } while (action < 1 || action > 2);
+
+            return action == 2 ? true : false;
         }
     }
 }
