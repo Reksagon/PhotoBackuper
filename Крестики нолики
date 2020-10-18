@@ -10,11 +10,11 @@ namespace ConsoleApp6
     {
         static string[] board = new string[9];
         static bool game = true;
-        static int count = 0; // счетчик ходов
+        static int count = 0;
         static string repeat;
-        static int Xwin = 0; // кол-во побед Х
-        static int Owin = 0; // кол-во побед О
-        static public void rules() // правила
+        static int Xwin = 0;
+        static int Owin = 0;
+        static public void rules()
         {
             Console.WriteLine("\t\tКРЕСТИКИ - НОЛИКИ");
             Console.ReadLine();
@@ -82,7 +82,7 @@ namespace ConsoleApp6
             board[a] = player;
             Console.Clear();
         }
-        static void Repeat() // повтор
+        static void Repeat()
         {
             Console.WriteLine("X win - " + Xwin+"\nO win - " + Owin);
             Console.Write("Хотите продолжить? (Y/N): ");
