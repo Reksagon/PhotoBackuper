@@ -4,12 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ConsoleApp3
+namespace ConsoleApp6
 {
     class Program
     {
-        static string[] board = new string[9]; 
-        static public void rules()
+        static string[] board = new string[9];
+        static bool game = true;
+        static int count = 0; // счетчик ходов
+        static string repeat;
+        static int Xwin = 0; // кол-во побед Х
+        static int Owin = 0; // кол-во побед О
+        static public void rules() // правила
         {
             Console.WriteLine("\t\tКРЕСТИКИ - НОЛИКИ");
             Console.ReadLine();
@@ -77,20 +82,57 @@ namespace ConsoleApp3
             board[a] = player;
             Console.Clear();
         }
+        static void Repeat() // повтор
+        {
+            Console.WriteLine("X win - " + Xwin+"\nO win - " + Owin);
+            Console.Write("Хотите продолжить? (Y/N): ");
+            repeat = Console.ReadLine();
+            if (repeat == "N")
+            {
+                game = false;
+            }
+            else
+            {
+                game = true;
+                count = 0;
+                init();
+            }
+        }
         static void Main(string[] args)
         {
             rules();
-            while (true)
+            while (game == true)
             {
                 init();
                 while (win() == false)
                 {
+                    if (count == 9)
+                    {
+                        Console.WriteLine("Ничья!");
+                        Repeat();
+                    }
                     plays("X");
                     if (win() == true)
+                    {
                         Console.WriteLine("Победа!");
+                        Xwin++;
+                        Repeat();
+                    }
+                    else
+                    {
+                        count++;
+                    }
                     plays("O");
                     if (win() == true)
+                    {
                         Console.WriteLine("Победа!");
+                        Owin++;
+                        Repeat();
+                    }
+                    else
+                    {
+                        count++;
+                    }
                 }
             }
         }
