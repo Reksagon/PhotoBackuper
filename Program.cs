@@ -1,19 +1,57 @@
-﻿using System;
+using System;
+using System.Text;
+using System.IO;
 using System.Threading;
+using System.Collections.Generic;
+
 
 namespace Menu
 {
+   
+    public class Users // Класс, который хранит регистрационные данные.
+    {
+        public List<string> Logins = new List<string>(); // Логин.
+        public List<string> Passwords = new List<string>(); // Пароль.
+    }
+    public class Reg_and_auto
+    {
+        static public void reg()
+        {
+            string filename = "meow.txt";
+            FileStream data = new FileStream(filename, FileMode.OpenOrCreate);
+            StreamWriter log = new StreamWriter(data);
+            data.Seek(0, SeekOrigin.End);
+            Console.WriteLine("Введите логин");
+            string text = Console.ReadLine();
+            log.WriteLine(text);
+            log.Flush();
+            StreamWriter pasw = new StreamWriter(data);
+            data.Seek(0, SeekOrigin.End);
+            Console.WriteLine("Введите пароль");
+            text = Console.ReadLine();
+            pasw.WriteLine(text);
+            pasw.Close();
+        }
+        void auto()
+        {
+
+        }
+    }
+
+
     class Menu
     {
+      
+        
         public static int x = 0;
-        public static string[,] polygon = new string[5, 5];
-        public static string[] tabs = new string[5] { "Snake ::", "choto ::", "x/0 ::", "Music ::", "Exit ::" };
-        private static bool[] setts = new bool[5] { false, false, false, false, false }; //0 - snake; 1 - choto, 2, - x/o
+        public static string[,] polygon = new string[4, 4];
+        public static string[] tabs = new string[4] { "Snake ::", "choto ::", "x/0 ::", "Exit ::" };
+        private static bool[] setts = new bool[4] { false, false, false, false }; //0 - snake; 1 - choto, 2, - x/o
         public static void Render()
         {
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 4; i++)
             {
-                for (int j = 0; j < 5; j++)
+                for (int j = 0; j < 4; j++)
                 {
                     if (polygon[i, j] == tabs[i])
                     {
@@ -46,7 +84,7 @@ namespace Menu
             {
                 int[] delta_x = new int[2] { -1, 1 };
                 int _X = delta_x[dir] + x;
-                if (_X > 4 || _X < 0)
+                if (_X > 3 || _X < 0)
                     return;
                 polygon[x, 0] = "";
                 x = _X;
@@ -58,7 +96,6 @@ namespace Menu
                 polygon[1, 1] = tabs[1];
                 polygon[2, 1] = tabs[2];
                 polygon[3, 1] = tabs[3];
-                polygon[4, 1] = tabs[4];
             }
             Console.Clear();
             Render();
@@ -86,30 +123,15 @@ namespace Menu
                  //3 Game
 
                 }
+               
                 else if (setts[3])
-                {
-                    if (true)
-                    {
-
-
-                        Thread myThread = new Thread(new ThreadStart(Music));
-                        myThread.Start(); // запускаем поток
-
-                    }
-                    if (false)
-                    {
-                        
-                    }
-                    //make Music
-                }
-                else if (setts[4])
                 {
                     Console.Beep(440, 300);
                     if (true)
                     {
                         Environment.Exit(0);
                     }
-                    //make Music
+                    //make Exit
                 }
 
 
@@ -118,6 +140,9 @@ namespace Menu
         static void Main(string[] args)
         {
 
+            Thread myThread = new Thread(new ThreadStart(Music));
+            myThread.Start(); // запускаем поток
+            Reg_and_auto.reg();
             Console.CursorVisible = false;
             Console.SetWindowPosition(0, 0);
             Console.Title = "Menu";
@@ -145,8 +170,7 @@ namespace Menu
             }
         }
         public static void Music()
-        {
-            Thread.EndThreadAffinity();
+        {        
             for (int i = 1; i < 9; i++)
             {
                 Console.Beep(784, 150);
