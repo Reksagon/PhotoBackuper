@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SD = System.Diagnostics;
 
 namespace Miner
 {
@@ -10,14 +11,17 @@ namespace Miner
     {
         public int SizeMapHeight { get; set; }
         public int SizeMapWidth { get; set; }
-        Map mines;//'*' = -1 - mine, '^' = -2 - flag, 1,2,3,4,5,6,7,8 - numbers
-        Map map;
+        private Map mines;//'*' = -1 - mine, '^' = -2 - flag, 1,2,3,4,5,6,7,8 - numbers
+        private Map map;
+        private Statistic statistic;
         public int AmountOfMines { get; set; }
-        public Miner()
+        public User CurrentUser { get; protected set; }
+        public Miner(User user)
         {
-            SizeMapHeight = 8;
-            SizeMapWidth = 8;
+            SizeMapHeight = 9;
+            SizeMapWidth = 9;
             AmountOfMines = 10;
+            CurrentUser = user;
         }
         private void Initial()
         {
@@ -30,6 +34,9 @@ namespace Miner
             bool bombed = false;
             Point point = new Point();
             bool firstMove = true;
+            long startTime = 0;//логирование момента начала игры во времени
+            double time;//затраченое время на игру
+            int score;//заработаные очки
             do
             {
                 Initial();
@@ -38,35 +45,54 @@ namespace Miner
                 firstMove = true;
                 do
                 {
-                    Console.Clear();
-                    map.Show();
+                    Show();
                     point = Menu.EnterPoint(SizeMapHeight, SizeMapWidth);
                     if (Menu.ChooseActionOnCell() == 1)
                     {
                         if (firstMove)
                         {
-                            mines.InitialBombs(point);
+                            startTime = SD.Stopwatch.GetTimestamp();
+                             mines.InitialBombs(point);
                             firstMove = false;
                         }
+                        if(map[point] == -2) map.CurrentMines++;
                         bombed = OpenCell(point);
                     }
                     else
                     {
                         map[point] = -2;
+                        map.CurrentMines--;
                     }
                     if (bombed)
                     {
+                        Show();
                         Console.WriteLine("Поражение!!!");
+                        Console.WriteLine($"Затраченое время {GetTimeGame(startTime):0.00} с");
                         endGame = true;
                     }
                     else if (CheckWin(map))
                     {
+                        time = GetTimeGame(startTime);
+                        score = ScoreCount(time);
+                        CurrentUser.Score += score;
+                        Show();
                         Console.WriteLine("Победа!!!");
+                        Console.WriteLine($"Затраченое время {time:0.00} с");
+                        Console.WriteLine($"Полученые очки {score}");
                         endGame = true;
                     }
                 } while (!endGame);
             } while (!Menu.ChooseExit());
         }
+        private void Show()
+        {
+            Console.Clear();
+            CurrentUser.Show(SizeMapWidth, SizeMapHeight);
+            map.Show();
+        }
+        private double GetTimeGame(long startTime) => //время в "с" затраченое на игру
+            (SD.Stopwatch.GetTimestamp() - startTime) / (double)SD.Stopwatch.Frequency;
+
         private bool OpenCell(Point point)//открытие ячеек,если бомба, тогда возврат true
         {
             map[point] = mines[point];
@@ -81,7 +107,7 @@ namespace Miner
         {
             if (mines[point] == 0)
             {
-                map[point] = 0;
+                map[point] = -3;
                 mines[point] = -3;
                 for (int i = point.Number - 1; i < point.Number + 2; i++)
                 {
@@ -117,6 +143,24 @@ namespace Miner
             if (CountFlags == map.AmountOfMines && CountEmptyCells == 0) return true;
             return false;
         }
+        private int ScoreCount(double time)
+        {
+            int score = (int)(200 * AmountOfMines / (double)SizeMapHeight / (double)SizeMapWidth);//очки за сложность
+            score += (int)(CountCellWithNumber() / (Math.Log(time)));//очки за время
+            return score;
+        }
+        private int CountCellWithNumber()
+        {
+            int count = 0;
+            for (int i = 0; i < SizeMapHeight; i++)
+            {
+                for (int j = 0; j < SizeMapWidth; j++)
+                {
+                    if (map[i, j] > 0) count++;
+                }
+            }
+            return count;
+        }
     }
     public class Map
     {
@@ -124,11 +168,12 @@ namespace Miner
         public int SizeMapWidth { get; set; }
         int[,] map;//'*' = -1 - mine, '^' = -2 - flag, 1,2,3,4,5,6,7,8 - numbers
         public int AmountOfMines { get; set; }
+        public int CurrentMines { get; set; }
         public Map(int sizeMapHeight, int sizeMapWidth, int amountOfMines)
         {
             SizeMapHeight = sizeMapHeight;
             SizeMapWidth = sizeMapWidth;
-            AmountOfMines = amountOfMines;
+            AmountOfMines = CurrentMines = amountOfMines;
             map = new int[SizeMapHeight, SizeMapWidth];
         }
         public Map():this(9, 9, 10) { }
@@ -199,6 +244,8 @@ namespace Miner
                 Console.WriteLine("|");
             }
             ShowHorizontalBorder();
+            Menu.ShowSpaces((SizeMapHeight.ToString().Length + SizeMapWidth * 2 - 13 - AmountOfMines.ToString().Length) / 2);//отрисовка пробелов для центровки информации
+            Console.WriteLine($"Оставшихся мин: {CurrentMines}\n");
         }
         private void ShowLeftBorder(int indexRow)//отрисовка левой границы поля (с цифрами)
         {
@@ -238,8 +285,9 @@ namespace Miner
                 case -2:
                     return '^';//flag
                 case 0:
-                case -3:
                     return ' ';//empty
+                case -3:
+                    return (char)183;//empty (open)
                 default:
                     return (char) (positionMap + 48);//1,2,3,4,5,6,7,8
             }
@@ -351,5 +399,38 @@ namespace Miner
 
             return action == 2 ? true : false;
         }
+        public static void ShowSpaces(int count)
+        {
+            if (count > 0) Console.Write(new string(' ', count));
+        }
+    }
+    public class User
+    {
+        public string Name { get; protected set; }
+        private int score;
+        public int Score
+        {
+            get => score;
+            set
+            {
+                if (value >= 0) score = value;
+                else throw new ArgumentException("Cчет не может быть отрицательным");
+            }
+        }
+        public User (string name, int score)
+        {
+            Name = name;
+            Score = score;
+        }
+        public User() : this("User", 0) { }
+        public void Show(int widthMap, int heightMap)
+        {
+            Menu.ShowSpaces((heightMap.ToString().Length + widthMap * 2 - 11 - (Name+score.ToString()).Length) / 2);//отрисовка пробелов для центровки информации
+            Console.WriteLine($"Игрок: {Name} очки: {Score}");
+        }
+    }
+    public class Statistic
+    {
+
     }
 }
