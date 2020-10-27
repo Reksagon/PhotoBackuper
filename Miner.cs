@@ -11,9 +11,10 @@ namespace Miner
     {
         public int SizeMapHeight { get; set; }
         public int SizeMapWidth { get; set; }
-        private Map mines;//'*' = -1 - mine, '^' = -2 - flag, 1,2,3,4,5,6,7,8 - numbers
+        private Map mines;//'*' = -1 - mine, '^' = -2 - flag, -3 - empty cell (open), 0 - empty cell, 1,2,3,4,5,6,7,8 - numbers
         private Map map;
         private Statistic statistic;
+        private int currentComplexity;
         public int AmountOfMines { get; set; }
         public User CurrentUser { get; protected set; }
         public Miner(User user)
@@ -22,9 +23,36 @@ namespace Miner
             SizeMapWidth = 9;
             AmountOfMines = 10;
             CurrentUser = user;
+            statistic = new Statistic();
         }
         private void Initial()
         {
+            Console.Clear();
+            Console.WriteLine("\tНовая игра");
+            currentComplexity = Menu.ChooseComplexity();
+            switch (currentComplexity)
+            {
+                case 1:
+                    SizeMapHeight = 9;
+                    SizeMapWidth = 9;
+                    AmountOfMines = 10;
+                    break;
+                case 2:
+                    SizeMapHeight = 16;
+                    SizeMapWidth = 16;
+                    AmountOfMines = 40;
+                    break;
+                case 3:
+                    SizeMapHeight = 16;
+                    SizeMapWidth = 30;
+                    AmountOfMines = 99;
+                    break;
+                case 4:
+                    SizeMapHeight = Menu.EnterHeightMap();
+                    SizeMapWidth = Menu.EnterWidthMap();
+                    AmountOfMines = Menu.EnterAmountOfMines();
+                    break;
+            }
             mines = new Map(SizeMapHeight, SizeMapWidth, AmountOfMines);
             map = new Map(SizeMapHeight, SizeMapWidth, AmountOfMines);
         }
@@ -37,6 +65,8 @@ namespace Miner
             long startTime = 0;//логирование момента начала игры во времени
             double time;//затраченое время на игру
             int score;//заработаные очки
+            bool exit = false;
+            if (Menu.ChooseNewGameOrLiders() == 2) statistic.ShowLiders(Menu.ChooseComplexity());
             do
             {
                 Initial();
@@ -75,6 +105,7 @@ namespace Miner
                         time = GetTimeGame(startTime);
                         score = ScoreCount(time);
                         CurrentUser.Score += score;
+                        statistic.Add(currentComplexity, CurrentUser.Name, score, time, DateTime.Now);
                         Show();
                         Console.WriteLine("Победа!!!");
                         Console.WriteLine($"Затраченое время {time:0.00} с");
@@ -82,7 +113,16 @@ namespace Miner
                         endGame = true;
                     }
                 } while (!endGame);
-            } while (!Menu.ChooseExit());
+                switch (Menu.ChooseExit())
+                {
+                    case 2:
+                        statistic.ShowLiders(Menu.ChooseComplexity());
+                        break;
+                    case 3:
+                        exit = true;
+                        break;
+                }
+            } while (!exit);
         }
         private void Show()
         {
@@ -244,7 +284,8 @@ namespace Miner
                 Console.WriteLine("|");
             }
             ShowHorizontalBorder();
-            Menu.ShowSpaces((SizeMapHeight.ToString().Length + SizeMapWidth * 2 - 13 - AmountOfMines.ToString().Length) / 2);//отрисовка пробелов для центровки информации
+            Menu.ShowSpaces((SizeMapHeight.ToString().Length + SizeMapWidth * (2 + SizeMapWidth / 26) 
+                - 13 - AmountOfMines.ToString().Length) / 2);//отрисовка пробелов для центровки информации
             Console.WriteLine($"Оставшихся мин: {CurrentMines}\n");
         }
         private void ShowLeftBorder(int indexRow)//отрисовка левой границы поля (с цифрами)
@@ -386,22 +427,75 @@ namespace Miner
             } while (action < 1 || action > 2);
             return action;
         }
-        public static bool ChooseExit()//проверка выхода из игры
+        public static int ChooseExit()//проверка выхода из игры
         {
             int action = 0;
             do
             {
                 Console.WriteLine("\nВведите:\n" +
                     "1 - начать заного\n" +
-                    "2 - завершить игру");
+                    "2 - просмотреть таблицу лидеров\n" +
+                    "3 - завершить игру");
                 int.TryParse(Console.ReadLine(), out action);
-            } while (action < 1 || action > 2);
-
-            return action == 2 ? true : false;
+            } while (action < 1 || action > 3);
+            return action;
         }
         public static void ShowSpaces(int count)
         {
             if (count > 0) Console.Write(new string(' ', count));
+        }
+        public static int ChooseComplexity()
+        {
+            int action = 0;
+            do
+            {
+                Console.WriteLine("Выберите сложность:\n" +
+                    "1 - новичок\n" +
+                    "2 - любитель\n" +
+                    "3 - профессионал\n" +
+                    "4 - особый");
+                int.TryParse(Console.ReadLine(), out action);
+            } while (action < 1 || action > 4);
+            return action;
+        }
+        public static int ChooseNewGameOrLiders()
+        {
+            int action = 0;
+            do
+            {
+                Console.WriteLine("Выберите:\n" +
+                    "1 - новая игра\n" +
+                    "2 - просмотреть таблицу лидеров");
+                int.TryParse(Console.ReadLine(), out action);
+            } while (action < 1 || action > 2);
+            return action;
+        }
+        public static int EnterWidthMap()
+        {
+            int width;
+            do
+            {
+                Console.WriteLine("Введите ширину поля:");
+            } while (!int.TryParse(Console.ReadLine(), out width));
+            return width;
+        }
+        public static int EnterHeightMap()
+        {
+            int height;
+            do
+            {
+                Console.WriteLine("Введите высоту поля:");
+            } while (!int.TryParse(Console.ReadLine(), out height));
+            return height;
+        }
+        public static int EnterAmountOfMines()
+        {
+            int mines;
+            do
+            {
+                Console.WriteLine("Введите колличество мин:");
+            } while (!int.TryParse(Console.ReadLine(), out mines));
+            return mines;
         }
     }
     public class User
@@ -425,12 +519,154 @@ namespace Miner
         public User() : this("User", 0) { }
         public void Show(int widthMap, int heightMap)
         {
-            Menu.ShowSpaces((heightMap.ToString().Length + widthMap * 2 - 11 - (Name+score.ToString()).Length) / 2);//отрисовка пробелов для центровки информации
+            Menu.ShowSpaces((heightMap.ToString().Length + widthMap * (2 + widthMap / 26) 
+                - 11 - (Name+score.ToString()).Length) / 2);//отрисовка пробелов для центровки информации
             Console.WriteLine($"Игрок: {Name} очки: {Score}");
         }
     }
     public class Statistic
     {
-
+        private StatisticTimeComparer timeComparer;
+        private StatisticScoreComparer scoreComparer;
+        private List<PlayedGame> newbie;
+        private List<PlayedGame> amateur;
+        private List<PlayedGame> professional;
+        private List<PlayedGame> special;
+        public Statistic()
+        {
+            timeComparer = new StatisticTimeComparer();
+            scoreComparer = new StatisticScoreComparer();
+            newbie = new List<PlayedGame>(11);
+            amateur = new List<PlayedGame>(11);
+            professional = new List<PlayedGame>(11);
+            special = new List<PlayedGame>(11);
+        }
+        private void AddNewbie(PlayedGame game)
+        {
+            newbie.Add(game);
+            newbie.Sort(timeComparer);
+            if (newbie.Count == 11)
+            {
+                newbie.RemoveAt(10);
+            }
+        }
+        private void AddAmateur(PlayedGame game)
+        {
+            amateur.Add(game);
+            amateur.Sort(timeComparer);
+            if (amateur.Count == 11)
+            {
+                amateur.RemoveAt(10);
+            }
+        }
+        private void AddProfesional(PlayedGame game)
+        {
+            professional.Add(game);
+            professional.Sort(timeComparer);
+            if (professional.Count == 11)
+            {
+                professional.RemoveAt(10);
+            }
+        }
+        private void AddSpecial(PlayedGame game)
+        {
+            special.Add(game);
+            special.Sort(scoreComparer);
+            if (special.Count == 11)
+            {
+                special.RemoveAt(10);
+            }
+        }
+        public void Add(int complexity, string name, int score, double time, DateTime date)
+        {
+            if (complexity < 1 || complexity > 4) throw new ArgumentOutOfRangeException();
+            if (name == null) throw new ArgumentNullException();
+            switch (complexity)
+            {
+                case 1:
+                    AddNewbie(new PlayedGame(name, score, time, date));
+                    break;
+                case 2:
+                    AddAmateur(new PlayedGame(name, score, time, date));
+                    break;
+                case 3:
+                    AddProfesional(new PlayedGame(name, score, time, date));
+                    break;
+                case 4:
+                    AddSpecial(new PlayedGame(name, score, time, date));
+                    break;
+            }
+        }
+        public void ShowLiders(int complexity)
+        {
+            if (complexity < 1 || complexity > 4) throw new ArgumentOutOfRangeException();
+            Console.Clear();
+            int i = 1;
+            switch (complexity)
+            {
+                case 1:
+                    Console.WriteLine("\tТаблица лидеров сложности \"Новичек\"");
+                    foreach (PlayedGame item in newbie)
+                    {
+                        Console.WriteLine($"{i++}. {item}");
+                    }
+                    break;
+                case 2:
+                    Console.WriteLine("\tТаблица лидеров сложности \"Любитель\"");
+                    foreach (PlayedGame item in amateur)
+                    {
+                        Console.WriteLine($"{i++}. {item}");
+                    }
+                    break;
+                case 3:
+                    Console.WriteLine("\tТаблица лидеров сложности \"Профессионал\"");
+                    foreach (PlayedGame item in professional)
+                    {
+                        Console.WriteLine($"{i++}. {item}");
+                    }
+                    break;
+                case 4:
+                    Console.WriteLine("\tТаблица лидеров сложности \"Особое\"");
+                    foreach (PlayedGame item in special)
+                    {
+                        Console.WriteLine($"{i++}. {item}");
+                    }
+                    break;
+            }
+            Console.Write("Нажмите клавишу для продолжения...");
+            Console.ReadKey();
+        }
+    }
+    public struct PlayedGame
+    {
+        public string NamePlayer { get; private set; }
+        public int ScoreGame { get; private set; }
+        public double TimeGame { get; private set; }
+        public DateTime Date { get; private set; }
+        public PlayedGame(string name, int score, double time, DateTime date)
+        {
+            NamePlayer = name;
+            ScoreGame = score;
+            TimeGame = time;
+            Date = date;
+        }
+        public override string ToString()
+        {
+            return $"Игрок: {NamePlayer} время {TimeGame:0.00} очки {ScoreGame} дата {Date:G}";
+        }
+    }
+    public class StatisticTimeComparer : IComparer<PlayedGame>
+    {
+        public int Compare(PlayedGame x, PlayedGame y)
+        {
+            return x.TimeGame.CompareTo(y.TimeGame);
+        }
+    }
+    public class StatisticScoreComparer : IComparer<PlayedGame>
+    {
+        public int Compare(PlayedGame x, PlayedGame y)
+        {
+            return x.ScoreGame.CompareTo(y.ScoreGame);
+        }
     }
 }
