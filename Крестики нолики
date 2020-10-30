@@ -10,21 +10,24 @@ namespace TicTacToe
 		{
 			var stillPlaying = true;
 
-			Console.ForegroundColor = ConsoleColor.DarkGreen;
-			Console.WriteLine("-----------------------");
-			Console.WriteLine("Welcome to Tic Tac Toe!");
-			Console.WriteLine("-----------------------\n");
+			Console.ForegroundColor = ConsoleColor.Green;
+			Console.WriteLine("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+			Console.WriteLine("\tКРЕСТИКИ НОЛИКИ!");
+			Console.WriteLine("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 			Console.ResetColor();
 
 			while (stillPlaying)
 			{
-				Console.WriteLine("What would you like to do:");
-				Console.WriteLine("1. Start a new game");
-				Console.WriteLine("2. Quit\n");
-
-				Console.Write("Type a number and hit <enter>: ");
-
-				var choice = GetUserInput("[12]");
+				Console.ForegroundColor = ConsoleColor.Cyan;
+				Console.WriteLine("\t       МЕНЮ:");
+				Console.WriteLine("     1. Начать новую игру");
+				Console.WriteLine("     2. Статистика");
+				Console.WriteLine("     3. Выход\n");
+				
+				Console.Write("     Ввод: ");
+				Console.ForegroundColor = ConsoleColor.Red;
+				var choice = Input("[123]");
+				Console.ResetColor();
 
 				switch (choice)
 				{
@@ -33,79 +36,120 @@ namespace TicTacToe
 						Console.Clear();
 						break;
 					case "2":
+						Statistics();
+						break;
+					case "3":
 						stillPlaying = false;
 						break;
 				}
 			}
 		}
-
-		private static string GetUserInput(string validPattern = null)
+		static int count = 0; // кол-во игр
+		static int x_win = 0; // кол-во побед х
+		static int o_win = 0; // кол-во обед о
+		static int x_pts = 0; // кол-во птс
+		static int o_pts = 0; // кол-во птс
+		private static string Input(string valid = null)
 		{
 			var input = Console.ReadLine();
 			input = input.Trim();
 
-			if (validPattern != null && !System.Text.RegularExpressions.Regex.IsMatch(input, validPattern))
+			if (valid != null && !System.Text.RegularExpressions.Regex.IsMatch(input, valid))
 			{
-				Console.ForegroundColor = ConsoleColor.DarkRed;
-				Console.WriteLine("\"" + input + "\" is not valid.\n");
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.WriteLine("\tСделайте правильный выбор!\n");
 				Console.ResetColor();
 				return null;
 			}
-
 			return input;
 		}
 
 		private static void PlayGame()
 		{
-			string numRowsChoice = null;
-			while (numRowsChoice == null)
+			string Rows = null;
+			while (Rows == null)
 			{
-				Console.Write("How many rows do you want to have? (3, 4, or 5) ");
-				numRowsChoice = GetUserInput("[345]");
+				Console.Clear();
+				Console.ForegroundColor = ConsoleColor.Yellow;
+				Console.WriteLine("\tУРОВНИ СЛОЖНОСТИ");
+				Console.WriteLine("   1. Обычный (3х3)\n   2. Средний (4х4)\n   3. Высокий (5х5)\n");
+				Console.Write("   Выберите уровень сложности: ");
+				Console.ForegroundColor = ConsoleColor.Red;
+				Rows = Input("[123]");
+				Console.ResetColor();
 			}
-			var boardSize = (int)Math.Pow(int.Parse(numRowsChoice), 2);
+			var boardSize = (int)Math.Pow(int.Parse(Rows)+2, 2);
 			var board = new string[boardSize];
-
-			var turn = "X";
+			
+			var move = "X";
 			while (true)
 			{
 				Console.Clear();
-
-				var winner = WhoWins(board);
+				
+				var winner = Win(board);
 				if (winner != null)
 				{
-					AnnounceResult(winner[0] + " WINS!!!", board);
+					count++;
+					if (winner[0] == 'X')
+					{
+						x_win++;
+						x_pts += 10;
+						
+					}
+					else if (winner[0] == 'O')
+					{
+						o_win++;
+						o_pts += 10;
+					}
+					Result("\t" + winner[0] + " ПОБЕДА!!!", board);
 					break;
 				}
-				if (IsBoardFull(board))
+				if (Draw(board))
 				{
-					AnnounceResult("It's a tie!!!", board);
+					count++;
+					Result("\tНИЧЬЯ!!!", board);
 					break;
 				}
-
-				Console.WriteLine("Place your " + turn + ":");
+				Console.ForegroundColor = ConsoleColor.Green;
+				Console.WriteLine("     Ход " + move + ":");
+				Console.ResetColor();
 
 				DrawBoard(board);
 
-				Console.WriteLine("\nUse the arrow keys and press <enter>");
+				Console.ForegroundColor = ConsoleColor.Green;
+				Console.WriteLine("Сделайте свой ход");
+				Console.ResetColor();
 
-				var xoLoc = GetXOLocation(board);
-				board[xoLoc] = turn;
+				var XO = GetXOLocation(board);
+				board[XO] = move;
 
-				turn = turn == "X" ? "O" : "X";
+				move = move == "X" ? "O" : "X";
 			}
 		}
-
-		private static void AnnounceResult(string message, string[] board)
+		private static void Statistics()
+		{
+			Console.Clear();
+			Console.ForegroundColor = ConsoleColor.Magenta;
+			Console.WriteLine("       Всего игр: " + count);
+			Console.WriteLine("       Побед Х: " + x_win + " = " + x_pts + " очков");
+			Console.WriteLine("       Побед О: " + o_win + " = " + o_pts + " очков");
+			Console.Write("Нажмите любую клавишу...");
+			Console.ResetColor();
+			Console.CursorVisible = false;
+			Console.ReadKey();
+			Console.CursorVisible = true;
+			Console.ResetColor();
+			Console.Clear();
+		}
+		private static void Result(string message, string[] board)
 		{
 			Console.WriteLine();
 			DrawBoard(board);
 
-			Console.ForegroundColor = ConsoleColor.DarkGreen;
+			Console.ForegroundColor = ConsoleColor.Red;
 			Console.WriteLine(message);
+			Console.Write("Нажмите любую клавишу...");
 			Console.ResetColor();
-
-			Console.Write("\nPress any key to continue...");
 			Console.CursorVisible = false;
 			Console.ReadKey();
 			Console.CursorVisible = true;
@@ -163,109 +207,116 @@ namespace TicTacToe
 
 		private static void DrawBoard(string[] board)
 		{
-			var numRows = (int)Math.Sqrt(board.Length);
+			var row = (int)Math.Sqrt(board.Length);
 
 			Console.WriteLine();
 
-			for (int row = 0; row < numRows; row++)
+			for (int i = 0; i < row; i++)
 			{
-				if (row != 0)
-					Console.WriteLine(" " + string.Join("|", Enumerable.Repeat("---", numRows)));
+				if (i != 0)
+					Console.WriteLine(" " + string.Join("|", Enumerable.Repeat("---", row)));
 
-				Console.Write(" " + string.Join("|", Enumerable.Repeat("   ", numRows)) + "\n ");
+				Console.Write(" " + string.Join("|", Enumerable.Repeat("   ", row)) + "\n ");
 
-				for (int col = 0; col < numRows; col++)
+				for (int j = 0; j < row; j++)
 				{
-					if (col != 0)
+					if (j != 0)
 						Console.Write("|");
-					var space = board[row * numRows + col] ?? " ";
+					var space = board[i * row + j] ?? " ";
 					if (space.Length > 1)
-						Console.ForegroundColor = ConsoleColor.DarkGreen;
+						Console.ForegroundColor = ConsoleColor.Red;
 					Console.Write(" " + space[0] + " ");
 					Console.ResetColor();
 				}
 
-				Console.WriteLine("\n " + string.Join("|", Enumerable.Repeat("   ", numRows)));
+				Console.WriteLine("\n " + string.Join("|", Enumerable.Repeat("   ", row)));
 			}
 
 			Console.WriteLine();
 		}
-		private static bool IsBoardFull(IEnumerable<string> board)
+
+		private static bool Draw(IEnumerable<string> board)
 		{
 			return board.All(space => space != null);
 		}
-		private static string WhoWins(string[] board)
-		{
-			var numRows = (int)Math.Sqrt(board.Length);
 
-			// Проверить строки
-			for (int row = 0; row < numRows; row++)
+		private static string Win(string[] board)
+		{
+			var row = (int)Math.Sqrt(board.Length);
+			// Проверяем ряды
+			for (int i = 0; i < row; i++)
 			{
-				if (board[row * numRows] != null)
+				if (board[i * row] != null)
 				{
 					bool hasTicTacToe = true;
-					for (int col = 1; col < numRows && hasTicTacToe; col++)
+					for (int col = 1; col < row && hasTicTacToe; col++)
 					{
-						if (board[row * numRows + col] != board[row * numRows])
+						if (board[i * row + col] != board[i * row])
 							hasTicTacToe = false;
 					}
 					if (hasTicTacToe)
 					{
-						for (int col = 0; col < numRows; col++)
-							board[row * numRows + col] += "!";
-						return board[row * numRows];
+						for (int col = 0; col < row; col++)
+							board[i * row + col] += "!";
+						return board[i * row];
 					}
 				}
 			}
-			// Проверить колонки
-			for (int col = 0; col < numRows; col++)
+
+			// Проверяем колонки
+			for (int i = 0; i < row; i++)
 			{
-				if (board[col] != null)
+				if (board[i] != null)
 				{
 					bool hasTicTacToe = true;
-					for (int row = 1; row < numRows && hasTicTacToe; row++)
+					for (int j = 1; j < row && hasTicTacToe; j++)
 					{
-						if (board[row * numRows + col] != board[col])
+						if (board[j * row + i] != board[i])
 							hasTicTacToe = false;
 					}
 					if (hasTicTacToe)
 					{
-						for (int row = 0; row < numRows; row++)
-							board[row * numRows + col] += "!";
-						return board[col];
+						for (int k = 0; k < row; k++)
+							board[k * row + i] += "!";
+						return board[i];
 					}
 				}
 			}
+
+			// Проверяем диагональ \
 			if (board[0] != null)
 			{
 				bool hasTicTacToe = true;
-				for (int row = 1; row < numRows && hasTicTacToe; row++)
+				for (int i = 1; i < row && hasTicTacToe; i++)
 				{
-					if (board[row * numRows + row] != board[0])
+					if (board[i * row + i] != board[0])
 						hasTicTacToe = false;
 				}
 				if (hasTicTacToe)
 				{
-					for (int row = 0; row < numRows; row++)
-						board[row * numRows + row] += "!";
+					for (int j = 0; j < row; j++)
+						board[j * row + j] += "!";
 					return board[0];
 				}
 			}
-			if (board[numRows - 1] != null)
+
+			// Проверяем диагональ /
+			if (board[row - 1] != null)
 			{
 				bool hasTicTacToe = true;
-				for (int row = 1; row < numRows && hasTicTacToe; row++)
+				for (int i = 1; i < row && hasTicTacToe; i++)
 				{
-					if (board[row * numRows + (numRows - 1 - row)] != board[numRows - 1])
+					if (board[i * row + (row - 1 - i)] != board[row - 1])
 						hasTicTacToe = false;
 				}
 				if (hasTicTacToe)
 				{
-					for (int row = 0; row < numRows; row++)
-						board[row * numRows + (numRows - 1 - row)] += "!";
-					return board[numRows - 1];
+					for (int j = 0; j < row; j++)
+						board[j* row + (row - 1 - j)] += "!";
+					return board[row - 1];
 				}
 			}
+
 			return null;
 		}
 	}
