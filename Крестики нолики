@@ -107,6 +107,8 @@ namespace TicTacToe
 				if (Draw(board))
 				{
 					count++;
+					x_pts += 5;
+					o_pts += 5;
 					Result("\tНИЧЬЯ!!!", board);
 					break;
 				}
