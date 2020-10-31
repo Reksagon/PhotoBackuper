@@ -23,14 +23,19 @@ namespace SnakeGame
             Console.CursorVisible = false;              // скрываем курсор
 
             walls = new Walls(x, y, '.');
-            snake = new Snake(x / 2, y / 3, 3);         // создаем объект змейки в центре поля и в длину 3 элемента
 
-            foodFactory = new FoodFactory(x, y, '@');   // инициализация объекта еды координатами и символом
+            Console.Write("\n\n\n\tPlayer: ");
+            Console.Write("\t\t\t\t\tLevel: 1");
+            Console.Write("\t\t\t\t\tTime: ");
+            Console.Write("\n\n\n\tScores: " + snake.scores);
+
+            snake = new Snake(x / 2, y / 3, 3, 0);         // создаем объект змейки в центре поля и в длину 3 элемента
+
+            foodFactory = new FoodFactory(x, y, 'o');   // инициализация объекта еды координатами и символом
             foodFactory.CreateFood();                   // добавляет еду для змейки
 
-
             time = new Timer(Loop, null, 0, 150);
-                        
+
             while (true)
             {
                 if (Console.KeyAvailable)
@@ -135,14 +140,17 @@ namespace SnakeGame
         private Point tail;                                                     // переменная для хвоста типа Point 
         private Point head;                                                     // переменная для головы типа Point                        
         bool rotate = true;
-        public Snake(int x, int y, int length)                                  // конструктор с прорисовкой змейки на старте
+        public int scores = 0;
+
+        public Snake(int x, int y, int length, int scores)                                  // конструктор с прорисовкой змейки на старте
         {
             direction = Direction.RIGHT;
             snake = new List<Point>();
             for (int i = x - length; i < x; i++)
             {
-                Point p = (i, y, 'o');
+                Point p = (i, y, '.');
                 snake.Add(p);
+                scores++;
                 p.Draw();
             }
         }
@@ -166,7 +174,7 @@ namespace SnakeGame
             head = GetNextPoint();
             if (head == p)
             {
-                snake.Add(head);                
+                snake.Add(head);
                 head.Draw();
                 return true;
             }
