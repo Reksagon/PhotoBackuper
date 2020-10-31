@@ -666,7 +666,7 @@ namespace Miner
     {
         public int Compare(PlayedGame x, PlayedGame y)
         {
-            return x.ScoreGame.CompareTo(y.ScoreGame);
+            return -x.ScoreGame.CompareTo(y.ScoreGame);
         }
     }
 }
