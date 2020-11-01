@@ -15,7 +15,9 @@ namespace Menu
     }
     public class Reg_and_auto
     {
-        static public void reg()
+         class Log
+    {
+        static public void Write()
         {
             string filename = "meow.txt";
             FileStream data = new FileStream(filename, FileMode.OpenOrCreate);
@@ -23,19 +25,69 @@ namespace Menu
             data.Seek(0, SeekOrigin.End);
             Console.WriteLine("Введите логин");
             string text = Console.ReadLine();
+            proverka(text);
             log.WriteLine(text);
-            log.Flush();
+            log.Close();
+        }
+        static private void proverka(string text)
+        {
+            foreach (string line in File.ReadLines("meow.txt"))
+            {
+                if (line.Contains(text))
+                {
+                    Console.WriteLine("Введите логин заново");
+                    Write();
+                }
+                else
+                    return;
+            }
+
+        }
+        static public void Reade(string text1)
+        {
+            List<string> Logins = new List<string>();
+            string filename = "meow.txt";
+            FileStream data = new FileStream(filename, FileMode.Open);
+            data.Seek(0, SeekOrigin.Begin);
+            StreamReader log = new StreamReader(data);
+            int count = File.ReadAllLines("meow.txt").Length;
+            for (int i = 0; i < count + 1; i++)
+            {
+                string text2 = log.ReadLine();
+                Logins.Add(text2);
+            }
+
+            log.Close();
+        }
+
+    }
+    class Pass
+    {
+        static public void Write()
+        {
+            string filename = "meow.txt";
+            FileStream data = new FileStream(filename, FileMode.OpenOrCreate);
             StreamWriter pasw = new StreamWriter(data);
             data.Seek(0, SeekOrigin.End);
             Console.WriteLine("Введите пароль");
-            text = Console.ReadLine();
+            string text = Console.ReadLine();
             pasw.WriteLine(text);
             pasw.Close();
         }
-        void auto()
+        static public void Reade(string text1)
         {
-
+            string filename = "meow.txt";
+            FileStream data = new FileStream(filename, FileMode.Open);
+            data.Seek(0, SeekOrigin.Begin);
+            StreamReader pasw = new StreamReader(data);
+            string text2 = pasw.ReadLine();
+            if (text1 == text2)
+            {
+                return;
+            }
+            pasw.Close();
         }
+    }
     }
 
 
