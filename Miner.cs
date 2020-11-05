@@ -15,6 +15,7 @@ namespace Miner
         private Map map;
         private Statistic statistic;
         private int currentComplexity;
+        //private Point cursor;
         public int AmountOfMines { get; set; }
         public User CurrentUser { get; protected set; }
         public Miner(User user)
@@ -56,7 +57,112 @@ namespace Miner
             mines = new Map(SizeMapHeight, SizeMapWidth, AmountOfMines);
             map = new Map(SizeMapHeight, SizeMapWidth, AmountOfMines);
         }
-        public void Start()
+        public void StartArrows() //основной метод для игры через стрелки
+        {
+            bool endGame = false;
+            bool bombed = false;
+            bool firstMove = true;
+            long startTime = 0;//логирование момента начала игры во времени
+            double time;//затраченое время на игру
+            int score;//заработаные очки
+            bool exit = false;
+            ConsoleKeyInfo key;
+            Point cursor;
+            Point newCursor;
+            if (Menu.ChooseNewGameOrLiders() == 2) statistic.ShowLiders(Menu.ChooseComplexity());
+            do
+            {
+                Initial();
+                cursor = new Point();
+                newCursor = new Point();
+                endGame = false;
+                bombed = false;
+                firstMove = true;
+                Show();
+                map.SetCursor(newCursor);
+                do
+                {
+                    key = Console.ReadKey();
+                    switch (key.Key)
+                    {
+                        case ConsoleKey.Enter://поставить флаг
+                            map[newCursor] = -2;
+                            map.CurrentMines--;
+                            map.ReShowNumberMines();
+                            map.WriteSymbol(newCursor);
+                            break;
+                        case ConsoleKey.Spacebar://открыть ячейку
+                            if (firstMove)//если первый ход то растановка мин 
+                            {
+                                startTime = SD.Stopwatch.GetTimestamp();
+                                mines.InitialBombs(newCursor);
+                                firstMove = false;
+                            }
+                            if (map[newCursor] == -2)//если на открываемой ячейке стоит флаг вощвращаем число мин
+                            {
+                                map.CurrentMines++;
+                                map.ReShowNumberMines();
+                            }
+                            bombed = OpenCellCursor(newCursor);
+                            break;
+                        case ConsoleKey.LeftArrow://сдвиг указателя влево
+                            cursor = newCursor.Clone();
+                            newCursor.Letter--;
+                            if (!map.IsInBorder(newCursor)) newCursor = cursor;
+                            break;
+                        case ConsoleKey.RightArrow://сдвиг указателя вправо
+                            cursor = newCursor.Clone();
+                            newCursor.Letter++;
+                            if (!map.IsInBorder(newCursor)) newCursor = cursor;
+                            break;
+                        case ConsoleKey.UpArrow://сдвиг указателя вверх
+                            cursor = newCursor.Clone();
+                            newCursor.Number--;
+                            if (!map.IsInBorder(newCursor)) newCursor = cursor;
+                            break;
+                        case ConsoleKey.DownArrow://сдвиг указателя вниз
+                            cursor = newCursor.Clone();
+                            newCursor.Number++;
+                            if (!map.IsInBorder(newCursor)) newCursor = cursor;
+                            break;
+                        default:
+                            map.WriteSymbol(newCursor);
+                            break;
+                    }
+                    map.WriteSymbol(cursor);//повторная прорисовка зарисованой вводом ячейки
+                    map.SetCursor(newCursor);//перемещение курсора на новую позицию
+                    if (bombed)//вывод результата поражения
+                    {
+                        Show();
+                        Console.WriteLine("Поражение!!!");
+                        Console.WriteLine($"Затраченое время {GetTimeGame(startTime):0.00} с");
+                        endGame = true;
+                    }
+                    else if (CheckWin(map))//проверка победы, вывод результата
+                    {
+                        time = GetTimeGame(startTime);
+                        score = ScoreCount(time);
+                        CurrentUser.Score += score;
+                        statistic.Add(currentComplexity, CurrentUser.Name, score, time, DateTime.Now);
+                        Show();
+                        Console.WriteLine("Победа!!!");
+                        Console.WriteLine($"Затраченое время {time:0.00} с");
+                        Console.WriteLine($"Полученые очки {score}");
+                        endGame = true;
+                    }
+                } while (!endGame);
+                switch (Menu.ChooseExit())//меню выхода
+                {
+                    case 2:
+                        statistic.ShowLiders(Menu.ChooseComplexity());
+                        break;
+                    case 3:
+                        exit = true;
+                        break;
+                }
+            } while (!exit);
+        }
+        public void StartCoordinate()//основной метод для игры через координаты
         {
             bool endGame = false;
             bool bombed = false;
@@ -124,7 +230,7 @@ namespace Miner
                 }
             } while (!exit);
         }
-        private void Show()
+        private void Show()//базовая отрисовка игрового поля
         {
             Console.Clear();
             CurrentUser.Show(SizeMapWidth, SizeMapHeight);
@@ -143,8 +249,24 @@ namespace Miner
             else if (mines[point] == 0) OpenCellWithNull(point);
             return false;
         }
+        private bool OpenCellCursor(Point point)//открытие ячеек,если бомба, тогда возврат true
+        {
+            map[point] = mines[point];
+            map.WriteSymbol(point);
+            if (mines[point] == -1)
+            {
+                return true;
+            }
+            else if (mines[point] == 0) OpenCellWithNullCursor(point);
+            return false;
+        }
         private void OpenCellWithNull(Point point)//открытие всех пустых смежных ячеек
         {
+            if (map[point] == -2)
+            {
+                map.CurrentMines++;
+                map.ReShowNumberMines();
+            }
             if (mines[point] == 0)
             {
                 map[point] = -3;
@@ -161,6 +283,32 @@ namespace Miner
                 }
             }
             map[point] = mines[point];
+        }
+        private void OpenCellWithNullCursor(Point point)//открытие всех пустых смежных ячеек
+        {
+            if (map[point] == -2)
+            {
+                map.CurrentMines++;
+                map.ReShowNumberMines();
+            }
+            if (mines[point] == 0)
+            {
+                map[point] = -3;
+                mines[point] = -3;
+                map.WriteSymbol(point);
+                for (int i = point.Number - 1; i < point.Number + 2; i++)
+                {
+                    for (int j = point.Letter - 1; j < point.Letter + 2; j++)
+                    {
+                        if (mines.IsInBorder(new Point(i, j)) && mines[new Point(i, j)] != -3)
+                        {
+                            OpenCellWithNullCursor(new Point(i, j));
+                        }
+                    }
+                }
+            }
+            map[point] = mines[point];
+            map.WriteSymbol(point);
         }
         private bool CheckWin(Map map)//проверка окончание игры победой
         {
@@ -183,13 +331,13 @@ namespace Miner
             if (CountFlags == map.AmountOfMines && CountEmptyCells == 0) return true;
             return false;
         }
-        private int ScoreCount(double time)
+        private int ScoreCount(double time)//подсчет очков за игру
         {
             int score = (int)(200 * AmountOfMines / (double)SizeMapHeight / (double)SizeMapWidth);//очки за сложность
             score += (int)(CountCellWithNumber() / (Math.Log(time)));//очки за время
             return score;
         }
-        private int CountCellWithNumber()
+        private int CountCellWithNumber()//подсчет ячеек с цифрами (для определения очков за время)
         {
             int count = 0;
             for (int i = 0; i < SizeMapHeight; i++)
@@ -202,7 +350,7 @@ namespace Miner
             return count;
         }
     }
-    public class Map
+    public class Map//поле игры
     {
         public int SizeMapHeight { get; set; }
         public int SizeMapWidth { get; set; }
@@ -286,7 +434,15 @@ namespace Miner
             ShowHorizontalBorder();
             Menu.ShowSpaces((SizeMapHeight.ToString().Length + SizeMapWidth * (2 + SizeMapWidth / 26) 
                 - 13 - AmountOfMines.ToString().Length) / 2);//отрисовка пробелов для центровки информации
-            Console.WriteLine($"Оставшихся мин: {CurrentMines}\n");
+            Console.WriteLine($"Оставшихся мин: {CurrentMines:00}\n");
+        }
+        public void ReShowNumberMines()//повторный показ колличества оставшихся мин (при управлении стрелками)
+        {
+            int number = 4 + SizeMapHeight;
+            int letter = (SizeMapHeight.ToString().Length + SizeMapWidth * (2 + SizeMapWidth / 26) 
+                - 13 - AmountOfMines.ToString().Length) / 2 + 16;
+            Console.SetCursorPosition(letter, number);
+            Console.Write("{0:00}", CurrentMines);
         }
         private void ShowLeftBorder(int indexRow)//отрисовка левой границы поля (с цифрами)
         {
@@ -306,7 +462,7 @@ namespace Miner
             }
             Console.WriteLine(" ");
         }
-        private void ShowHorizontalBorder()
+        private void ShowHorizontalBorder()//отрисовка горизонтальной граници поля с минами
         {
             if (SizeMapHeight > 9) Console.Write(" ");
             Console.Write(" +-");
@@ -317,7 +473,7 @@ namespace Miner
             }
             Console.WriteLine("+");
         }
-        private char GetSymbol(int positionMap)
+        private char GetSymbol(int positionMap)//парсер с кода символа в символ char
         {
             switch (positionMap)
             {
@@ -356,6 +512,19 @@ namespace Miner
                 map[point.Number, point.Letter] = value;
             }
         }
+        private int XCursor(Point p) =>//определения позиции курсора по горизонтали (letter)
+            SizeMapHeight.ToString().Length + 2 + (p.Letter) * (2 + SizeMapWidth / 26);
+        private int YCursor(Point p) =>//определение позиции курсора по вертикали (number)
+            3 + p.Number;
+        public void WriteSymbol(Point p)//перезапись (отриовка) на поле ячейки
+        {
+            Console.SetCursorPosition(XCursor(p), YCursor(p));
+            Console.Write(GetSymbol(map[p.Number, p.Letter]));
+        }
+        public void SetCursor(Point p)//установка курсора на экране по игровой координате
+        {
+            Console.SetCursorPosition(XCursor(p), YCursor(p));
+        }
     }
     public struct Point
     {
@@ -366,26 +535,12 @@ namespace Miner
             Number = number;
             Letter = letter;
         }
-        public override string ToString()
-        {
-            return $"{Number},{Letter}";
-        }
-        public override bool Equals(object obj)
-        {
-            return this.ToString().Equals(obj.ToString());
-        }
-        public override int GetHashCode()
-        {
-            return this.ToString().GetHashCode();
-        }
-        public static bool operator ==(Point p1, Point p2)
-        {
-            return p1.Equals(p2);
-        }
-        public static bool operator !=(Point p1, Point p2)
-        {
-            return !(p1 == p2);
-        }
+        public Point Clone() => new Point(Number, Letter);
+        public override string ToString() => $"{Number},{Letter}";
+        public override bool Equals(object obj) => this.ToString().Equals(obj.ToString());
+        public override int GetHashCode() => this.ToString().GetHashCode();
+        public static bool operator ==(Point p1, Point p2) => p1.Equals(p2);
+        public static bool operator !=(Point p1, Point p2) => !(p1 == p2);
     }
     public static class Menu
     {
@@ -444,7 +599,7 @@ namespace Miner
         {
             if (count > 0) Console.Write(new string(' ', count));
         }
-        public static int ChooseComplexity()
+        public static int ChooseComplexity()//меню выбора сложности
         {
             int action = 0;
             do
@@ -458,7 +613,7 @@ namespace Miner
             } while (action < 1 || action > 4);
             return action;
         }
-        public static int ChooseNewGameOrLiders()
+        public static int ChooseNewGameOrLiders()//стартовое меню
         {
             int action = 0;
             do
@@ -470,7 +625,7 @@ namespace Miner
             } while (action < 1 || action > 2);
             return action;
         }
-        public static int EnterWidthMap()
+        public static int EnterWidthMap()//ввод ширины поля (letter) при пользовательской игре
         {
             int width;
             do
@@ -479,7 +634,7 @@ namespace Miner
             } while (!int.TryParse(Console.ReadLine(), out width));
             return width;
         }
-        public static int EnterHeightMap()
+        public static int EnterHeightMap()//ввод высоты поля (number) при пользовательской игре
         {
             int height;
             do
@@ -488,7 +643,7 @@ namespace Miner
             } while (!int.TryParse(Console.ReadLine(), out height));
             return height;
         }
-        public static int EnterAmountOfMines()
+        public static int EnterAmountOfMines()//ввод колличества мин при пользовательской игре
         {
             int mines;
             do
@@ -517,67 +672,75 @@ namespace Miner
             Score = score;
         }
         public User() : this("User", 0) { }
-        public void Show(int widthMap, int heightMap)
+        public void Show(int widthMap, int heightMap)//отрисовка на поле данных пользователя
         {
             Menu.ShowSpaces((heightMap.ToString().Length + widthMap * (2 + widthMap / 26) 
                 - 11 - (Name+score.ToString()).Length) / 2);//отрисовка пробелов для центровки информации
             Console.WriteLine($"Игрок: {Name} очки: {Score}");
         }
     }
-    public class Statistic
+    public class Statistic//данные статистики игры
     {
-        private StatisticTimeComparer timeComparer;
-        private StatisticScoreComparer scoreComparer;
         private List<PlayedGame> newbie;
         private List<PlayedGame> amateur;
         private List<PlayedGame> professional;
         private List<PlayedGame> special;
         public Statistic()
         {
-            timeComparer = new StatisticTimeComparer();
-            scoreComparer = new StatisticScoreComparer();
             newbie = new List<PlayedGame>(11);
             amateur = new List<PlayedGame>(11);
             professional = new List<PlayedGame>(11);
             special = new List<PlayedGame>(11);
         }
-        private void AddNewbie(PlayedGame game)
+        private void AddNewbie(PlayedGame game)//добавление записи в таблицу "новичек"
         {
-            newbie.Add(game);
-            newbie.Sort(timeComparer);
-            if (newbie.Count == 11)
+            if (newbie.Count == 0 || game.TimeGame < newbie.LastOrDefault().TimeGame) 
             {
-                newbie.RemoveAt(10);
+                newbie.Add(game);
+                newbie = newbie.OrderBy(t => t.TimeGame).ToList();
+                if (newbie.Count == 11)
+                {
+                    newbie.RemoveAt(10);
+                }
             }
         }
-        private void AddAmateur(PlayedGame game)
+        private void AddAmateur(PlayedGame game)//добавление записи в таблицу "любитель"
         {
-            amateur.Add(game);
-            amateur.Sort(timeComparer);
-            if (amateur.Count == 11)
+            if (amateur.Count == 0 || game.TimeGame < amateur.LastOrDefault().TimeGame)
             {
-                amateur.RemoveAt(10);
+                amateur.Add(game);
+                amateur = amateur.OrderBy(t => t.TimeGame).ToList();
+                if (amateur.Count == 11)
+                {
+                    amateur.RemoveAt(10);
+                }
             }
         }
-        private void AddProfesional(PlayedGame game)
+        private void AddProfesional(PlayedGame game)//добавление записи в таблицу "профессионал"
         {
-            professional.Add(game);
-            professional.Sort(timeComparer);
-            if (professional.Count == 11)
+            if (professional.Count == 0 || game.TimeGame < professional.LastOrDefault().TimeGame)
             {
-                professional.RemoveAt(10);
+                professional.Add(game);
+                professional = professional.OrderBy(t => t.TimeGame).ToList();
+                if (professional.Count == 11)
+                {
+                    professional.RemoveAt(10);
+                }
             }
         }
-        private void AddSpecial(PlayedGame game)
+        private void AddSpecial(PlayedGame game)//добавление записи в таблицу "особое"
         {
-            special.Add(game);
-            special.Sort(scoreComparer);
-            if (special.Count == 11)
+            if (special.Count == 0 || game.ScoreGame > special.LastOrDefault().ScoreGame)
             {
-                special.RemoveAt(10);
+                special.Add(game);
+                special = special.OrderByDescending(t => t.ScoreGame).ToList();
+                if (special.Count == 11)
+                {
+                    special.RemoveAt(10);
+                }
             }
         }
-        public void Add(int complexity, string name, int score, double time, DateTime date)
+        public void Add(int complexity, string name, int score, double time, DateTime date)//добавление данных в таблици лидеров
         {
             if (complexity < 1 || complexity > 4) throw new ArgumentOutOfRangeException();
             if (name == null) throw new ArgumentNullException();
@@ -597,7 +760,7 @@ namespace Miner
                     break;
             }
         }
-        public void ShowLiders(int complexity)
+        public void ShowLiders(int complexity)//отрисовка таблици лидеров
         {
             if (complexity < 1 || complexity > 4) throw new ArgumentOutOfRangeException();
             Console.Clear();
@@ -650,23 +813,7 @@ namespace Miner
             TimeGame = time;
             Date = date;
         }
-        public override string ToString()
-        {
-            return $"Игрок: {NamePlayer} время {TimeGame:0.00} очки {ScoreGame} дата {Date:G}";
-        }
-    }
-    public class StatisticTimeComparer : IComparer<PlayedGame>
-    {
-        public int Compare(PlayedGame x, PlayedGame y)
-        {
-            return x.TimeGame.CompareTo(y.TimeGame);
-        }
-    }
-    public class StatisticScoreComparer : IComparer<PlayedGame>
-    {
-        public int Compare(PlayedGame x, PlayedGame y)
-        {
-            return -x.ScoreGame.CompareTo(y.ScoreGame);
-        }
+        public override string ToString() => 
+            $"Игрок: {NamePlayer} время {TimeGame:0.00} очки {ScoreGame} дата {Date:G}";
     }
 }
