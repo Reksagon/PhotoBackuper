@@ -15,7 +15,6 @@ namespace Miner
         private Map map;
         private Statistic statistic;
         private int currentComplexity;
-        //private Point cursor;
         public int AmountOfMines { get; set; }
         public User CurrentUser { get; protected set; }
         public Miner(User user)
@@ -79,6 +78,7 @@ namespace Miner
                 bombed = false;
                 firstMove = true;
                 Show();
+                ShowInfoCursor();
                 map.SetCursor(newCursor);
                 do
                 {
@@ -86,10 +86,13 @@ namespace Miner
                     switch (key.Key)
                     {
                         case ConsoleKey.Enter://поставить флаг
-                            map[newCursor] = -2;
-                            map.CurrentMines--;
-                            map.ReShowNumberMines();
-                            map.WriteSymbol(newCursor);
+                            if (map[newCursor] != -2)//защита от повторной установки флага
+                            {
+                                map.CurrentMines--;
+                                map[newCursor] = -2;
+                                map.ReShowNumberMines();
+                                map.WriteSymbol(newCursor);
+                            }
                             break;
                         case ConsoleKey.Spacebar://открыть ячейку
                             if (firstMove)//если первый ход то растановка мин 
@@ -98,7 +101,7 @@ namespace Miner
                                 mines.InitialBombs(newCursor);
                                 firstMove = false;
                             }
-                            if (map[newCursor] == -2)//если на открываемой ячейке стоит флаг вощвращаем число мин
+                            if (map[newCursor] == -2)//если на открываемой ячейке стоит флаг возвращаем число мин
                             {
                                 map.CurrentMines++;
                                 map.ReShowNumberMines();
@@ -125,12 +128,19 @@ namespace Miner
                             newCursor.Number++;
                             if (!map.IsInBorder(newCursor)) newCursor = cursor;
                             break;
+                        case ConsoleKey.Escape://выход
+                            endGame = true;
+                            Show();
+                            break;
                         default:
                             map.WriteSymbol(newCursor);
                             break;
                     }
-                    map.WriteSymbol(cursor);//повторная прорисовка зарисованой вводом ячейки
-                    map.SetCursor(newCursor);//перемещение курсора на новую позицию
+                    if (!endGame)
+                    {
+                        map.WriteSymbol(cursor);//повторная прорисовка зарисованой вводом ячейки
+                        map.SetCursor(newCursor);//перемещение курсора на новую позицию
+                    }
                     if (bombed)//вывод результата поражения
                     {
                         Show();
@@ -151,15 +161,7 @@ namespace Miner
                         endGame = true;
                     }
                 } while (!endGame);
-                switch (Menu.ChooseExit())//меню выхода
-                {
-                    case 2:
-                        statistic.ShowLiders(Menu.ChooseComplexity());
-                        break;
-                    case 3:
-                        exit = true;
-                        break;
-                }
+                exit = Exit();
             } while (!exit);
         }
         public void StartCoordinate()//основной метод для игры через координаты
@@ -194,7 +196,7 @@ namespace Miner
                         if(map[point] == -2) map.CurrentMines++;
                         bombed = OpenCell(point);
                     }
-                    else
+                    else if (map[point] != -2)//защита от повторной установки флага
                     {
                         map[point] = -2;
                         map.CurrentMines--;
@@ -219,15 +221,7 @@ namespace Miner
                         endGame = true;
                     }
                 } while (!endGame);
-                switch (Menu.ChooseExit())
-                {
-                    case 2:
-                        statistic.ShowLiders(Menu.ChooseComplexity());
-                        break;
-                    case 3:
-                        exit = true;
-                        break;
-                }
+                exit = Exit();
             } while (!exit);
         }
         private void Show()//базовая отрисовка игрового поля
@@ -235,6 +229,14 @@ namespace Miner
             Console.Clear();
             CurrentUser.Show(SizeMapWidth, SizeMapHeight);
             map.Show();
+        }
+        private void ShowInfoCursor()
+        {
+            Console.WriteLine("Управление:\n" +
+                "стрелки (вверх, вниз, влево, вправо) - движение по полю\n" +
+                "cpace - открыть ячейку\n" +
+                "enter - поставить флаг\n" +
+                "esc - выход");
         }
         private double GetTimeGame(long startTime) => //время в "с" затраченое на игру
             (SD.Stopwatch.GetTimestamp() - startTime) / (double)SD.Stopwatch.Frequency;
@@ -265,7 +267,6 @@ namespace Miner
             if (map[point] == -2)
             {
                 map.CurrentMines++;
-                map.ReShowNumberMines();
             }
             if (mines[point] == 0)
             {
@@ -348,6 +349,18 @@ namespace Miner
                 }
             }
             return count;
+        }
+        public bool Exit()//выход
+        {
+            switch (Menu.ChooseExit())//меню выхода
+            {
+                case 2:
+                    statistic.ShowLiders(Menu.ChooseComplexity());
+                    break;
+                case 3:
+                    return true;
+            }
+            return false;
         }
     }
     public class Map//поле игры
