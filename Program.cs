@@ -17,7 +17,7 @@ namespace Menu
     {
          class Log
     {
-        static public void Write()
+        public void Write()
         {
             string filename = "meow.txt";
             FileStream data = new FileStream(filename, FileMode.OpenOrCreate);
@@ -29,7 +29,7 @@ namespace Menu
             log.WriteLine(text);
             log.Close();
         }
-        static private void proverka(string text)
+        private void proverka(string text)
         {
             foreach (string line in File.ReadLines("meow.txt"))
             {
@@ -43,7 +43,7 @@ namespace Menu
             }
 
         }
-        static public void Reade(string text1)
+        public void Reade(string text1)
         {
             List<string> Logins = new List<string>();
             string filename = "meow.txt";
@@ -63,7 +63,7 @@ namespace Menu
     }
     class Pass
     {
-        static public void Write()
+         public void Write()
         {
             string filename = "meow.txt";
             FileStream data = new FileStream(filename, FileMode.OpenOrCreate);
@@ -74,7 +74,7 @@ namespace Menu
             pasw.WriteLine(text);
             pasw.Close();
         }
-        static public void Reade(string text1)
+        public void Reade(string text1)
         {
             string filename = "meow.txt";
             FileStream data = new FileStream(filename, FileMode.Open);
