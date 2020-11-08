@@ -7,11 +7,21 @@ using System.Collections.Generic;
 
 namespace Menu
 {
-   
-    public class Users // Класс, который хранит регистрационные данные.
+   public void User() // Класс, который хранит регистрационные данные.
     {
-        public List<string> Logins = new List<string>(); // Логин.
-        public List<string> Passwords = new List<string>(); // Пароль.
+        List<string> Logins = new List<string>(); // Логин.       
+        List<string> Passwords = new List<string>(); // Пароль.
+
+        int count = File.ReadAllLines("meow.txt").Length;
+
+        FileStream data = new FileStream("meow.txt", FileMode.Open);
+        StreamReader log = new StreamReader(data);        
+        for (int i=0; i<count ; i++)
+        {
+            Logins.Add(log.ReadLine());
+            i++;
+            Passwords.Add(log.ReadLine());
+        }
     }
     public class Reg_and_auto
     {
