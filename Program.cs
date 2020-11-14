@@ -15,7 +15,7 @@ namespace Menu
         static List<string> Passwords = new List<string>(); // Пароль.
         static public void User() // Класс, который хранит регистрационные данные.
         {
-	    FileStream daa = new FileStream("meow.txt", FileMode.OpenOrCreate);
+            FileStream daa = new FileStream("meow.txt", FileMode.OpenOrCreate);
             daa.Close();
             int count = File.ReadAllLines("meow.txt").Length;
             FileStream data = new FileStream("meow.txt", FileMode.Open);
@@ -36,23 +36,25 @@ namespace Menu
             static public void Write()
             {
                 string filename = "meow.txt";
-
                 FileStream data = new FileStream(filename, FileMode.Open);
                 StreamWriter log = new StreamWriter(data);
                 data.Seek(0, SeekOrigin.End);
                 Console.WriteLine("Введите логин:");
                 string text = Console.ReadLine();
-                prov_wr(text);
+                prov_wr(text,data,log);
                 log.WriteLine(text);
                 log.Close();
                 data.Dispose();
                 Pass.Write();
             }
-            static private void prov_wr(string text)
+            static private void prov_wr(string text,FileStream data,StreamWriter log)
             {
                 if (Logins.Contains(text))
                 {
+
                     Console.WriteLine("Такой логин уже есть!");
+                    log.Close();
+                    data.Dispose();
                     Write();
                 }
                 else return;
@@ -61,7 +63,7 @@ namespace Menu
             static private void prov_re(string text)
             {
 
-
+		User();
                 if (Logins.Contains(text))
                 {
                     a = Logins.IndexOf(text);
@@ -71,9 +73,12 @@ namespace Menu
 
                     Console.WriteLine($"Неправильно введен логин! У вас есть {q} попыток!");
                     q--;
-                    Reade(); }
-                if (q == 0)
-                { reg_or_auto(); }
+                    if (q == 0)
+                    { reg_or_auto(); }
+                    Reade(); 
+                    
+                }
+         
             }
             static public void Reade()
             {
@@ -109,9 +114,13 @@ namespace Menu
                 }
                 if (b == a)
                 { return; }
-                else { q--; Console.WriteLine($"Неправильно введен пароль! У вас есть {q} попыток!"); Reade(); }
-                if (q == 0)
-                { reg_or_auto(); }
+                else { q--; Console.WriteLine($"Неправильно введен пароль! У вас есть {q-1} попыток!"); 
+                    if (q == 0)
+                    { reg_or_auto(); }
+                    Reade();
+                    
+                }
+               
 
             }
             static public void Reade()
@@ -127,6 +136,7 @@ namespace Menu
         }
         static public void reg_or_auto()
         {
+            q = 5;
             Menu_reg.Meny();
         }
     }
