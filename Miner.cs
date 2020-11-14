@@ -4,17 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SD = System.Diagnostics;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Miner
 {
+    public enum Complexity { newbie = 1, amatour, profesional, special }
     public class Miner
     {
         public int SizeMapHeight { get; set; }
         public int SizeMapWidth { get; set; }
         private Map mines;//'*' = -1 - mine, '^' = -2 - flag, -3 - empty cell (open), 0 - empty cell, 1,2,3,4,5,6,7,8 - numbers
         private Map map;
-        private Statistic statistic;
-        private int currentComplexity;
+        private IStatistic statistic;
+        private Complexity currentComplexity;
         public int AmountOfMines { get; set; }
         public User CurrentUser { get; protected set; }
         public Miner(User user)
@@ -23,7 +26,8 @@ namespace Miner
             SizeMapWidth = 9;
             AmountOfMines = 10;
             CurrentUser = user;
-            statistic = new Statistic();
+            statistic = new SingleStatistic();
+            statistic.Load();
         }
         private void Initial()
         {
@@ -32,197 +36,215 @@ namespace Miner
             currentComplexity = Menu.ChooseComplexity();
             switch (currentComplexity)
             {
-                case 1:
+                case Complexity.newbie:
                     SizeMapHeight = 9;
                     SizeMapWidth = 9;
                     AmountOfMines = 10;
                     break;
-                case 2:
+                case Complexity.amatour:
                     SizeMapHeight = 16;
                     SizeMapWidth = 16;
                     AmountOfMines = 40;
                     break;
-                case 3:
+                case Complexity.profesional:
                     SizeMapHeight = 16;
                     SizeMapWidth = 30;
                     AmountOfMines = 99;
                     break;
-                case 4:
+                case Complexity.special:
                     SizeMapHeight = Menu.EnterHeightMap();
                     SizeMapWidth = Menu.EnterWidthMap();
                     AmountOfMines = Menu.EnterAmountOfMines();
                     break;
+                default:
+                    throw new NotImplementedException();
             }
             mines = new Map(SizeMapHeight, SizeMapWidth, AmountOfMines);
             map = new Map(SizeMapHeight, SizeMapWidth, AmountOfMines);
         }
         public void StartArrows() //основной метод для игры через стрелки
         {
-            bool endGame = false;
-            bool bombed = false;
-            bool firstMove = true;
-            long startTime = 0;//логирование момента начала игры во времени
-            double time;//затраченое время на игру
-            int score;//заработаные очки
-            bool exit = false;
-            ConsoleKeyInfo key;
-            Point cursor;
-            Point newCursor;
-            if (Menu.ChooseNewGameOrLiders() == 2) statistic.ShowLiders(Menu.ChooseComplexity());
-            do
+            try
             {
-                Initial();
-                cursor = new Point();
-                newCursor = new Point();
-                endGame = false;
-                bombed = false;
-                firstMove = true;
-                Show();
-                ShowInfoCursor();
-                map.SetCursor(newCursor);
+                bool endGame = false;
+                bool bombed = false;
+                bool firstMove = true;
+                long startTime = 0;//логирование момента начала игры во времени
+                double time;//затраченое время на игру
+                int score;//заработаные очки
+                bool exit = false;
+                ConsoleKeyInfo key;
+                Point cursor;
+                Point newCursor;
+                if (Menu.ChooseNewGameOrLiders() == 2) statistic.ShowLiders(Menu.ChooseComplexity());
                 do
                 {
-                    key = Console.ReadKey();
-                    switch (key.Key)
+                    Initial();
+                    cursor = new Point();
+                    newCursor = new Point();
+                    endGame = false;
+                    bombed = false;
+                    firstMove = true;
+                    Show();
+                    ShowInfoCursor();
+                    map.SetCursor(newCursor);
+                    do
                     {
-                        case ConsoleKey.Enter://поставить флаг
-                            if (map[newCursor] != -2)//защита от повторной установки флага
-                            {
-                                map.CurrentMines--;
-                                map[newCursor] = -2;
-                                map.ReShowNumberMines();
+                        key = Console.ReadKey();
+                        switch (key.Key)
+                        {
+                            case ConsoleKey.Enter://поставить флаг
+                                if (map[newCursor] != -2)//защита от повторной установки флага
+                                {
+                                    map.CurrentMines--;
+                                    map[newCursor] = -2;
+                                    map.ReShowNumberMines();
+                                    map.WriteSymbol(newCursor);
+                                }
+                                break;
+                            case ConsoleKey.Spacebar://открыть ячейку
+                                if (firstMove)//если первый ход то растановка мин 
+                                {
+                                    startTime = SD.Stopwatch.GetTimestamp();
+                                    mines.InitialBombs(newCursor);
+                                    firstMove = false;
+                                }
+                                if (map[newCursor] == -2)//если на открываемой ячейке стоит флаг возвращаем число мин
+                                {
+                                    map.CurrentMines++;
+                                    map.ReShowNumberMines();
+                                }
+                                bombed = OpenCellCursor(newCursor);
+                                break;
+                            case ConsoleKey.LeftArrow://сдвиг указателя влево
+                                cursor = newCursor.Clone();
+                                newCursor.Letter--;
+                                if (!map.IsInBorder(newCursor)) newCursor = cursor;
+                                break;
+                            case ConsoleKey.RightArrow://сдвиг указателя вправо
+                                cursor = newCursor.Clone();
+                                newCursor.Letter++;
+                                if (!map.IsInBorder(newCursor)) newCursor = cursor;
+                                break;
+                            case ConsoleKey.UpArrow://сдвиг указателя вверх
+                                cursor = newCursor.Clone();
+                                newCursor.Number--;
+                                if (!map.IsInBorder(newCursor)) newCursor = cursor;
+                                break;
+                            case ConsoleKey.DownArrow://сдвиг указателя вниз
+                                cursor = newCursor.Clone();
+                                newCursor.Number++;
+                                if (!map.IsInBorder(newCursor)) newCursor = cursor;
+                                break;
+                            case ConsoleKey.Escape://выход
+                                endGame = true;
+                                Show();
+                                break;
+                            default:
                                 map.WriteSymbol(newCursor);
-                            }
-                            break;
-                        case ConsoleKey.Spacebar://открыть ячейку
-                            if (firstMove)//если первый ход то растановка мин 
-                            {
-                                startTime = SD.Stopwatch.GetTimestamp();
-                                mines.InitialBombs(newCursor);
-                                firstMove = false;
-                            }
-                            if (map[newCursor] == -2)//если на открываемой ячейке стоит флаг возвращаем число мин
-                            {
-                                map.CurrentMines++;
-                                map.ReShowNumberMines();
-                            }
-                            bombed = OpenCellCursor(newCursor);
-                            break;
-                        case ConsoleKey.LeftArrow://сдвиг указателя влево
-                            cursor = newCursor.Clone();
-                            newCursor.Letter--;
-                            if (!map.IsInBorder(newCursor)) newCursor = cursor;
-                            break;
-                        case ConsoleKey.RightArrow://сдвиг указателя вправо
-                            cursor = newCursor.Clone();
-                            newCursor.Letter++;
-                            if (!map.IsInBorder(newCursor)) newCursor = cursor;
-                            break;
-                        case ConsoleKey.UpArrow://сдвиг указателя вверх
-                            cursor = newCursor.Clone();
-                            newCursor.Number--;
-                            if (!map.IsInBorder(newCursor)) newCursor = cursor;
-                            break;
-                        case ConsoleKey.DownArrow://сдвиг указателя вниз
-                            cursor = newCursor.Clone();
-                            newCursor.Number++;
-                            if (!map.IsInBorder(newCursor)) newCursor = cursor;
-                            break;
-                        case ConsoleKey.Escape://выход
-                            endGame = true;
+                                break;
+                        }
+                        if (!endGame)
+                        {
+                            map.WriteSymbol(cursor);//повторная прорисовка зарисованой вводом ячейки
+                            map.SetCursor(newCursor);//перемещение курсора на новую позицию
+                        }
+                        if (bombed)//вывод результата поражения
+                        {
                             Show();
-                            break;
-                        default:
-                            map.WriteSymbol(newCursor);
-                            break;
-                    }
-                    if (!endGame)
-                    {
-                        map.WriteSymbol(cursor);//повторная прорисовка зарисованой вводом ячейки
-                        map.SetCursor(newCursor);//перемещение курсора на новую позицию
-                    }
-                    if (bombed)//вывод результата поражения
-                    {
-                        Show();
-                        Console.WriteLine("Поражение!!!");
-                        Console.WriteLine($"Затраченое время {GetTimeGame(startTime):0.00} с");
-                        endGame = true;
-                    }
-                    else if (CheckWin(map))//проверка победы, вывод результата
-                    {
-                        time = GetTimeGame(startTime);
-                        score = ScoreCount(time);
-                        CurrentUser.Score += score;
-                        statistic.Add(currentComplexity, CurrentUser.Name, score, time, DateTime.Now);
-                        Show();
-                        Console.WriteLine("Победа!!!");
-                        Console.WriteLine($"Затраченое время {time:0.00} с");
-                        Console.WriteLine($"Полученые очки {score}");
-                        endGame = true;
-                    }
-                } while (!endGame);
-                exit = Exit();
-            } while (!exit);
+                            Console.WriteLine("Поражение!!!");
+                            Console.WriteLine($"Затраченое время {GetTimeGame(startTime):0.00} с");
+                            endGame = true;
+                        }
+                        else if (CheckWin(map))//проверка победы, вывод результата
+                        {
+                            time = GetTimeGame(startTime);
+                            score = ScoreCount(time);
+                            CurrentUser.Score += score;
+                            statistic.Add(currentComplexity, CurrentUser.Name, score, time, DateTime.Now);
+                            Show();
+                            Console.WriteLine("Победа!!!");
+                            Console.WriteLine($"Затраченое время {time:0.00} с");
+                            Console.WriteLine($"Полученые очки {score}");
+                            endGame = true;
+                        }
+                    } while (!endGame);
+                    exit = Exit();
+                } while (!exit);
+                statistic.Save();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
         public void StartCoordinate()//основной метод для игры через координаты
         {
-            bool endGame = false;
-            bool bombed = false;
-            Point point = new Point();
-            bool firstMove = true;
-            long startTime = 0;//логирование момента начала игры во времени
-            double time;//затраченое время на игру
-            int score;//заработаные очки
-            bool exit = false;
-            if (Menu.ChooseNewGameOrLiders() == 2) statistic.ShowLiders(Menu.ChooseComplexity());
-            do
+            try
             {
-                Initial();
-                endGame = false;
-                bombed = false;
-                firstMove = true;
+                bool endGame = false;
+                bool bombed = false;
+                Point point = new Point();
+                bool firstMove = true;
+                long startTime = 0;//логирование момента начала игры во времени
+                double time;//затраченое время на игру
+                int score;//заработаные очки
+                bool exit = false;
+                if (Menu.ChooseNewGameOrLiders() == 2) statistic.ShowLiders(Menu.ChooseComplexity());
                 do
                 {
-                    Show();
-                    point = Menu.EnterPoint(SizeMapHeight, SizeMapWidth);
-                    if (Menu.ChooseActionOnCell() == 1)
+                    Initial();
+                    endGame = false;
+                    bombed = false;
+                    firstMove = true;
+                    do
                     {
-                        if (firstMove)
+                        Show();
+                        point = Menu.EnterPoint(SizeMapHeight, SizeMapWidth);
+                        if (Menu.ChooseActionOnCell() == 1)
                         {
-                            startTime = SD.Stopwatch.GetTimestamp();
-                             mines.InitialBombs(point);
-                            firstMove = false;
+                            if (firstMove)
+                            {
+                                startTime = SD.Stopwatch.GetTimestamp();
+                                mines.InitialBombs(point);
+                                firstMove = false;
+                            }
+                            if (map[point] == -2) map.CurrentMines++;
+                            bombed = OpenCell(point);
                         }
-                        if(map[point] == -2) map.CurrentMines++;
-                        bombed = OpenCell(point);
-                    }
-                    else if (map[point] != -2)//защита от повторной установки флага
-                    {
-                        map[point] = -2;
-                        map.CurrentMines--;
-                    }
-                    if (bombed)
-                    {
-                        Show();
-                        Console.WriteLine("Поражение!!!");
-                        Console.WriteLine($"Затраченое время {GetTimeGame(startTime):0.00} с");
-                        endGame = true;
-                    }
-                    else if (CheckWin(map))
-                    {
-                        time = GetTimeGame(startTime);
-                        score = ScoreCount(time);
-                        CurrentUser.Score += score;
-                        statistic.Add(currentComplexity, CurrentUser.Name, score, time, DateTime.Now);
-                        Show();
-                        Console.WriteLine("Победа!!!");
-                        Console.WriteLine($"Затраченое время {time:0.00} с");
-                        Console.WriteLine($"Полученые очки {score}");
-                        endGame = true;
-                    }
-                } while (!endGame);
-                exit = Exit();
-            } while (!exit);
+                        else if (map[point] != -2)//защита от повторной установки флага
+                        {
+                            map[point] = -2;
+                            map.CurrentMines--;
+                        }
+                        if (bombed)
+                        {
+                            Show();
+                            Console.WriteLine("Поражение!!!");
+                            Console.WriteLine($"Затраченое время {GetTimeGame(startTime):0.00} с");
+                            endGame = true;
+                        }
+                        else if (CheckWin(map))
+                        {
+                            time = GetTimeGame(startTime);
+                            score = ScoreCount(time);
+                            CurrentUser.Score += score;
+                            statistic.Add(currentComplexity, CurrentUser.Name, score, time, DateTime.Now);
+                            Show();
+                            Console.WriteLine("Победа!!!");
+                            Console.WriteLine($"Затраченое время {time:0.00} с");
+                            Console.WriteLine($"Полученые очки {score}");
+                            endGame = true;
+                        }
+                    } while (!endGame);
+                    exit = Exit();
+                } while (!exit);
+                statistic.Save();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
         private void Show()//базовая отрисовка игрового поля
         {
@@ -350,7 +372,7 @@ namespace Miner
             }
             return count;
         }
-        public bool Exit()//выход
+        private bool Exit()//выход
         {
             switch (Menu.ChooseExit())//меню выхода
             {
@@ -612,7 +634,7 @@ namespace Miner
         {
             if (count > 0) Console.Write(new string(' ', count));
         }
-        public static int ChooseComplexity()//меню выбора сложности
+        public static Complexity ChooseComplexity()//меню выбора сложности
         {
             int action = 0;
             do
@@ -624,7 +646,7 @@ namespace Miner
                     "4 - особый");
                 int.TryParse(Console.ReadLine(), out action);
             } while (action < 1 || action > 4);
-            return action;
+            return (Complexity)action;
         }
         public static int ChooseNewGameOrLiders()//стартовое меню
         {
@@ -692,128 +714,240 @@ namespace Miner
             Console.WriteLine($"Игрок: {Name} очки: {Score}");
         }
     }
-    public class Statistic//данные статистики игры
+    public interface IStatistic
     {
-        private List<PlayedGame> newbie;
-        private List<PlayedGame> amateur;
-        private List<PlayedGame> professional;
-        private List<PlayedGame> special;
-        public Statistic()
+        void Add(Complexity complexity, string name, int score, double time, DateTime date);
+        void ShowLiders(Complexity complexity);
+        void Save();
+        void Load();
+    }
+    [Serializable]
+    public class GradeStatistic : IStatistic//данные статистики игры
+    {
+        private List<IPlayedGame> newbie;
+        private List<IPlayedGame> amateur;
+        private List<IPlayedGame> professional;
+        private List<IPlayedGame> special;
+        public GradeStatistic()
         {
-            newbie = new List<PlayedGame>(11);
-            amateur = new List<PlayedGame>(11);
-            professional = new List<PlayedGame>(11);
-            special = new List<PlayedGame>(11);
+            newbie = new List<IPlayedGame>(11);
+            amateur = new List<IPlayedGame>(11);
+            professional = new List<IPlayedGame>(11);
+            special = new List<IPlayedGame>(11);
         }
-        private void AddNewbie(PlayedGame game)//добавление записи в таблицу "новичек"
+        private void AddNewbie(IPlayedGame game)//добавление записи в таблицу "новичек"
         {
-            if (newbie.Count == 0 || game.TimeGame < newbie.LastOrDefault().TimeGame) 
+            if (newbie.Count == 0 || game.GetTimeGame() < newbie.LastOrDefault().GetTimeGame()) 
             {
                 newbie.Add(game);
-                newbie = newbie.OrderBy(t => t.TimeGame).ToList();
+                newbie = newbie.OrderBy(t => t.GetTimeGame()).ToList();
                 if (newbie.Count == 11)
                 {
                     newbie.RemoveAt(10);
                 }
             }
         }
-        private void AddAmateur(PlayedGame game)//добавление записи в таблицу "любитель"
+        private void AddAmateur(IPlayedGame game)//добавление записи в таблицу "любитель"
         {
-            if (amateur.Count == 0 || game.TimeGame < amateur.LastOrDefault().TimeGame)
+            if (amateur.Count == 0 || game.GetTimeGame() < amateur.LastOrDefault().GetTimeGame())
             {
                 amateur.Add(game);
-                amateur = amateur.OrderBy(t => t.TimeGame).ToList();
+                amateur = amateur.OrderBy(t => t.GetTimeGame()).ToList();
                 if (amateur.Count == 11)
                 {
                     amateur.RemoveAt(10);
                 }
             }
         }
-        private void AddProfesional(PlayedGame game)//добавление записи в таблицу "профессионал"
+        private void AddProfesional(IPlayedGame game)//добавление записи в таблицу "профессионал"
         {
-            if (professional.Count == 0 || game.TimeGame < professional.LastOrDefault().TimeGame)
+            if (professional.Count == 0 || game.GetTimeGame() < professional.LastOrDefault().GetTimeGame())
             {
                 professional.Add(game);
-                professional = professional.OrderBy(t => t.TimeGame).ToList();
+                professional = professional.OrderBy(t => t.GetTimeGame()).ToList();
                 if (professional.Count == 11)
                 {
                     professional.RemoveAt(10);
                 }
             }
         }
-        private void AddSpecial(PlayedGame game)//добавление записи в таблицу "особое"
+        private void AddSpecial(IPlayedGame game)//добавление записи в таблицу "особое"
         {
-            if (special.Count == 0 || game.ScoreGame > special.LastOrDefault().ScoreGame)
+            if (special.Count == 0 || game.GetScoreGame() > special.LastOrDefault().GetScoreGame())
             {
                 special.Add(game);
-                special = special.OrderByDescending(t => t.ScoreGame).ToList();
+                special = special.OrderByDescending(t => t.GetScoreGame()).ToList();
                 if (special.Count == 11)
                 {
                     special.RemoveAt(10);
                 }
             }
         }
-        public void Add(int complexity, string name, int score, double time, DateTime date)//добавление данных в таблици лидеров
+        public void Add(Complexity complexity, string name, int score, double time, DateTime date)//добавление данных в таблици лидеров
         {
-            if (complexity < 1 || complexity > 4) throw new ArgumentOutOfRangeException();
             if (name == null) throw new ArgumentNullException();
             switch (complexity)
             {
-                case 1:
+                case Complexity.newbie:
                     AddNewbie(new PlayedGame(name, score, time, date));
                     break;
-                case 2:
+                case Complexity.amatour:
                     AddAmateur(new PlayedGame(name, score, time, date));
                     break;
-                case 3:
+                case Complexity.profesional:
                     AddProfesional(new PlayedGame(name, score, time, date));
                     break;
-                case 4:
+                case Complexity.special:
                     AddSpecial(new PlayedGame(name, score, time, date));
                     break;
+                default:
+                    throw new NotImplementedException();
             }
         }
-        public void ShowLiders(int complexity)//отрисовка таблици лидеров
+        public void ShowLiders(Complexity complexity)//отрисовка таблици лидеров
         {
-            if (complexity < 1 || complexity > 4) throw new ArgumentOutOfRangeException();
             Console.Clear();
             int i = 1;
             switch (complexity)
             {
-                case 1:
+                case Complexity.newbie:
                     Console.WriteLine("\tТаблица лидеров сложности \"Новичек\"");
-                    foreach (PlayedGame item in newbie)
+                    foreach (IPlayedGame item in newbie)
                     {
                         Console.WriteLine($"{i++}. {item}");
                     }
                     break;
-                case 2:
+                case Complexity.amatour:
                     Console.WriteLine("\tТаблица лидеров сложности \"Любитель\"");
-                    foreach (PlayedGame item in amateur)
+                    foreach (IPlayedGame item in amateur)
                     {
                         Console.WriteLine($"{i++}. {item}");
                     }
                     break;
-                case 3:
+                case Complexity.profesional:
                     Console.WriteLine("\tТаблица лидеров сложности \"Профессионал\"");
-                    foreach (PlayedGame item in professional)
+                    foreach (IPlayedGame item in professional)
                     {
                         Console.WriteLine($"{i++}. {item}");
                     }
                     break;
-                case 4:
+                case Complexity.special:
                     Console.WriteLine("\tТаблица лидеров сложности \"Особое\"");
-                    foreach (PlayedGame item in special)
+                    foreach (IPlayedGame item in special)
                     {
                         Console.WriteLine($"{i++}. {item}");
                     }
                     break;
+                default:
+                    throw new NotImplementedException();
             }
             Console.Write("Нажмите клавишу для продолжения...");
             Console.ReadKey();
         }
+        public void Save()
+        {
+            if (!Directory.Exists("data")) Directory.CreateDirectory("data");
+            BinaryFormatter bf = new BinaryFormatter();
+            Save(newbie, "data\\minerNewbie.bin", bf);
+            Save(amateur, "data\\minerAmateur.bin", bf);
+            Save(professional, "data\\minerProfessional.bin", bf);
+            Save(special, "data\\minerSpecial.bin", bf);
+        }
+        private void Save(List<IPlayedGame> list, string path, BinaryFormatter bf)
+        {
+            using (Stream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                bf.Serialize(fs, list);
+            }
+        }
+        public void Load()
+        {
+            if (Directory.Exists("data") && File.Exists("data\\miner.bin"))
+            {
+                BinaryFormatter bf = new BinaryFormatter();
+                newbie = Load("data\\minerNewbie.bin", bf);
+                amateur = Load("data\\minerAmateur.bin", bf);
+                professional = Load("data\\minerProfessional.bin", bf);
+                special = Load("data\\minerSpecial.bin", bf);
+            }
+        }
+        private List<IPlayedGame> Load(string path, BinaryFormatter bf)
+        {
+            if (File.Exists(path))
+            {
+                using (Stream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                {
+                    return bf.Deserialize(fs) as List<IPlayedGame>;
+                }
+            }
+            else return new List<IPlayedGame>();
+        }
     }
-    public struct PlayedGame
+    [Serializable]
+    public class SingleStatistic : IStatistic//данные статистики игры
+    {
+        private List<IPlayedGame> statistic;
+        public SingleStatistic()
+        {
+            statistic = new List<IPlayedGame>(11);
+        }
+        private void AddStatistic(IPlayedGame game)//добавление записи в таблицу
+        {
+            if (statistic.Count == 0 || game.GetScoreGame() < statistic.LastOrDefault().GetScoreGame())
+            {
+                statistic.Add(game);
+                statistic = statistic.OrderByDescending(t => t.GetScoreGame()).ToList();
+                if (statistic.Count == 11)
+                {
+                    statistic.RemoveAt(10);
+                }
+            }
+        }
+        public void Add(Complexity complexity, string name, int score, double time, DateTime date)//добавление данных в таблици лидеров
+        {
+            if (name == null) throw new ArgumentNullException();
+            AddStatistic(new ComplexityPlayedGame(new PlayedGame(name, score, time, date), complexity));
+        }
+        public void ShowLiders(Complexity complexity)//отрисовка таблици лидеров
+        {
+            Console.Clear();
+            int i = 1;
+            Console.WriteLine("\tТаблица лидеров");
+            foreach (IPlayedGame item in statistic)
+            {
+                Console.WriteLine($"{i++}. {item}");
+            }
+            Console.Write("Нажмите клавишу для продолжения...");
+            Console.ReadKey();
+        }
+        public void Save()
+        {
+            if (!Directory.Exists("data")) Directory.CreateDirectory("data");
+            BinaryFormatter bf = new BinaryFormatter();
+            using(Stream fs=new FileStream("data\\minerSingle.bin", FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                bf.Serialize(fs, statistic);
+            }
+        }
+        public void Load()
+        {
+            if (Directory.Exists("data") && File.Exists("data\\minerSingle.bin"))
+            {
+                BinaryFormatter bf = new BinaryFormatter();
+                using (Stream fs = new FileStream("data\\minerSingle.bin", FileMode.Open, FileAccess.Read))
+                {
+                    statistic = bf.Deserialize(fs) as List<IPlayedGame>;
+                }
+            }
+        }
+    }
+    public interface IPlayedGame
+    {
+        int GetScoreGame();
+        double GetTimeGame();
+    }
+    [Serializable]
+    public class PlayedGame : IPlayedGame
     {
         public string NamePlayer { get; private set; }
         public int ScoreGame { get; private set; }
@@ -828,5 +962,40 @@ namespace Miner
         }
         public override string ToString() => 
             $"Игрок: {NamePlayer} время {TimeGame:0.00} очки {ScoreGame} дата {Date:G}";
+        public virtual int GetScoreGame() => ScoreGame;
+        public virtual double GetTimeGame() => TimeGame;
+    }
+    [Serializable]
+    public abstract class PlayedGameDecorator : IPlayedGame
+    {
+        protected IPlayedGame playedGame;
+        protected PlayedGameDecorator(IPlayedGame playedGame) =>
+            this.playedGame = playedGame;
+        public override string ToString() => playedGame.ToString();
+        public int GetScoreGame() => playedGame.GetScoreGame();
+        public double GetTimeGame() => playedGame.GetTimeGame();
+    }
+    [Serializable]
+    public class ComplexityPlayedGame : PlayedGameDecorator
+    {
+        private Complexity complexity;
+        public ComplexityPlayedGame(IPlayedGame playedGame, Complexity complexity) : base(playedGame) =>
+            this.complexity = complexity;
+        public override string ToString() 
+        {
+            switch (complexity)
+            {
+                case Complexity.newbie:
+                    return playedGame.ToString() + " сложность \"Новичек\"";
+                case Complexity.amatour:
+                    return playedGame.ToString() + " сложность \"Любитель\"";
+                case Complexity.profesional:
+                    return playedGame.ToString() + " сложность \"Професcионал\"";
+                case Complexity.special:
+                    return playedGame.ToString() + " сложность \"Особое\"";
+                default:
+                    throw new NotImplementedException();
+            }
+        }
     }
 }
