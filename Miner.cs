@@ -32,8 +32,7 @@ namespace Miner
         private void Initial()
         {
             Console.Clear();
-            Console.WriteLine("\tНовая игра");
-            currentComplexity = Menu.ChooseComplexity();
+            currentComplexity = Menu.ChooseComplexity("\tНовая игра");
             switch (currentComplexity)
             {
                 case Complexity.newbie:
@@ -76,7 +75,7 @@ namespace Miner
                 ConsoleKeyInfo key;
                 Point cursor;
                 Point newCursor;
-                if (Menu.ChooseNewGameOrLiders() == 2) statistic.ShowLiders(Menu.ChooseComplexity());
+                if (Menu.ChooseNewGameOrLiders() == 0) statistic.ShowLiders();
                 do
                 {
                     Initial();
@@ -158,7 +157,7 @@ namespace Miner
                         {
                             Show();
                             Console.WriteLine("Поражение!!!");
-                            Console.WriteLine($"Затраченое время {GetTimeGame(startTime):0.00} с");
+                            Console.WriteLine($"Затраченое время {GetTimeGame(startTime):0.00} с...");
                             endGame = true;
                         }
                         else if (CheckWin(map))//проверка победы, вывод результата
@@ -174,13 +173,18 @@ namespace Miner
                             endGame = true;
                         }
                     } while (!endGame);
+                    Console.WriteLine("Нажмите клавишу для продолжения...");
+                    Console.ReadKey();
                     exit = Exit();
                 } while (!exit);
-                statistic.Save();
             }
             catch(Exception ex)
             {
                 Console.WriteLine(ex.Message);
+            }
+            finally
+            {
+                statistic.Save();
             }
         }
         public void StartCoordinate()//основной метод для игры через координаты
@@ -195,7 +199,7 @@ namespace Miner
                 double time;//затраченое время на игру
                 int score;//заработаные очки
                 bool exit = false;
-                if (Menu.ChooseNewGameOrLiders() == 2) statistic.ShowLiders(Menu.ChooseComplexity());
+                if (Menu.ChooseNewGameOrLiders() == 1) statistic.ShowLiders();
                 do
                 {
                     Initial();
@@ -206,7 +210,7 @@ namespace Miner
                     {
                         Show();
                         point = Menu.EnterPoint(SizeMapHeight, SizeMapWidth);
-                        if (Menu.ChooseActionOnCell() == 1)
+                        if (Menu.ChooseActionOnCell() == 0)
                         {
                             if (firstMove)
                             {
@@ -247,13 +251,18 @@ namespace Miner
                             endGame = true;
                         }
                     } while (!endGame);
+                    Console.WriteLine("Нажмите клавишу для продолжения...");
+                    Console.ReadKey();
                     exit = Exit();
                 } while (!exit);
-                statistic.Save();
             }
             catch(Exception ex)
             {
                 Console.WriteLine(ex.Message);
+            }
+            finally
+            {
+                statistic.Save();
             }
         }
         private void Show()//базовая отрисовка игрового поля
@@ -386,10 +395,11 @@ namespace Miner
         {
             switch (Menu.ChooseExit())//меню выхода
             {
-                case 2:
-                    statistic.ShowLiders(Menu.ChooseComplexity());
+                case 1:
+                    statistic.ShowLiders();
                     break;
-                case 3:
+                case 2:
+                case -1:
                     return true;
             }
             return false;
@@ -615,61 +625,30 @@ namespace Miner
             point.Letter = letter - 1;
             return point;
         }
-        public static int ChooseActionOnCell()//выбор действия для ячейки
-        {
-            int action = 0;
-            do
-            {
-                Console.WriteLine("Введите:\n" +
-                    "1 - открыть ячейку\n" +
-                    "2 - поставить флаг на бомбу (^)");
-                int.TryParse(Console.ReadLine(), out action);
-            } while (action < 1 || action > 2);
-            return action;
-        }
-        public static int ChooseExit()//проверка выхода из игры
-        {
-            int action = 0;
-            do
-            {
-                Console.WriteLine("\nВведите:\n" +
-                    "1 - начать заного\n" +
-                    "2 - просмотреть таблицу лидеров\n" +
-                    "3 - завершить игру");
-                int.TryParse(Console.ReadLine(), out action);
-            } while (action < 1 || action > 3);
-            return action;
-        }
+        public static int ChooseActionOnCell() =>//выбор действия для ячейки
+            Menu.MultipleChoiceNumbers(false, "Введите:",
+                "открыть ячейку",
+                "поставить флаг на бомбу (^)");
+        public static int ChooseExit() =>//проверка выхода из игры
+            Menu.MultipleChoice(true, "Введите:",
+                "начать заного",
+                "просмотреть таблицу лидеров",
+                "завершить игру");
         public static void ShowSpaces(int count)
         {
             if (count > 0) Console.Write(new string(' ', count));
         }
-        public static Complexity ChooseComplexity()//меню выбора сложности
-        {
-            int action = 0;
-            do
-            {
-                Console.WriteLine("Выберите сложность:\n" +
-                    "1 - новичок\n" +
-                    "2 - любитель\n" +
-                    "3 - профессионал\n" +
-                    "4 - особый");
-                int.TryParse(Console.ReadLine(), out action);
-            } while (action < 1 || action > 4);
-            return (Complexity)action;
-        }
-        public static int ChooseNewGameOrLiders()//стартовое меню
-        {
-            int action = 0;
-            do
-            {
-                Console.WriteLine("Выберите:\n" +
-                    "1 - новая игра\n" +
-                    "2 - просмотреть таблицу лидеров");
-                int.TryParse(Console.ReadLine(), out action);
-            } while (action < 1 || action > 2);
-            return action;
-        }
+        public static Complexity ChooseComplexity(string message) =>//меню выбора сложности
+            (Complexity)(Menu.MultipleChoice(false,
+            message + "\nВыберите сложность:",
+            "новичок",
+            "любитель",
+            "профессионал",
+            "особый") + 1);
+        public static int ChooseNewGameOrLiders() =>//стартовое меню
+            Menu.MultipleChoice(false, "Выберите:",
+            "новая игра",
+            "просмотреть таблицу лидеров");
         public static int EnterWidthMap()//ввод ширины поля (letter) при пользовательской игре
         {
             int width;
@@ -696,6 +675,74 @@ namespace Miner
                 Console.WriteLine("Введите колличество мин:");
             } while (!int.TryParse(Console.ReadLine(), out mines));
             return mines;
+        }
+        public static int MultipleChoice(bool canCancel, string message, params string[] options)
+        {
+            int optionsPerLine = options.Length;
+            int currentSelection = 0;
+            ConsoleKey key;
+            Console.CursorVisible = false;
+            do
+            {
+                Console.Clear();
+                if (message != null) Console.WriteLine(message);
+                for (int i = 0; i < options.Length; i++)
+                {
+                    if (i == currentSelection)
+                        Console.ForegroundColor = ConsoleColor.Red;
+
+                    Console.WriteLine(options[i]);
+
+                    Console.ResetColor();
+                }
+                key = Console.ReadKey(true).Key;
+                switch (key)
+                {
+                    case ConsoleKey.UpArrow:
+                        {
+                            if (currentSelection > 0)
+                                currentSelection--;
+                            break;
+                        }
+                    case ConsoleKey.DownArrow:
+                        {
+                            if (currentSelection < optionsPerLine - 1)
+                                currentSelection++;
+                            break;
+
+                        }
+                    case ConsoleKey.Escape:
+                        {
+                            if (canCancel)
+                                return -1;
+                            break;
+                        }
+                }
+            } while (key != ConsoleKey.Enter);
+            Console.CursorVisible = true;
+            return currentSelection;
+        }
+        public static int MultipleChoiceNumbers(bool canCancel, string message, params string[] options)
+        {
+            int curSel = 0;
+            ConsoleKey key;
+            do
+            {
+                if (message != null) Console.WriteLine($"{message}\nВведите для выбора:");
+                for (int i = 1; i <= options.Length; i++)
+                {
+                    Console.WriteLine($"{i}. {options[i - 1]}");
+                }
+                key = Console.ReadKey(true).Key;
+                if (canCancel && key == ConsoleKey.Escape) return -1;
+            } while (!int.TryParse(key.ToString().Remove(0, 1), out curSel) || curSel < 1 || curSel > options.Length);
+            return curSel - 1;
+        }
+        public static string EnterValue(string message)
+        {
+            Console.Clear();
+            Console.Write(message);
+            return Console.ReadLine();
         }
     }
     public class User
@@ -727,7 +774,7 @@ namespace Miner
     public interface IStatistic
     {
         void Add(Complexity complexity, string name, int score, double time, DateTime date);
-        void ShowLiders(Complexity complexity);
+        void ShowLiders();
         void Save();
         void Load();
     }
@@ -814,11 +861,12 @@ namespace Miner
                     throw new NotImplementedException();
             }
         }
-        public void ShowLiders(Complexity complexity)//отрисовка таблици лидеров
+        public void ShowLiders()//отрисовка таблици лидеров
         {
+            Complexity comp = Menu.ChooseComplexity(null);
             Console.Clear();
             int i = 1;
-            switch (complexity)
+            switch (comp)
             {
                 case Complexity.newbie:
                     Console.WriteLine("\tТаблица лидеров сложности \"Новичек\"");
@@ -903,7 +951,7 @@ namespace Miner
         }
         private void AddStatistic(IPlayedGame game)//добавление записи в таблицу
         {
-            if (statistic.Count == 0 || game.GetScoreGame() < statistic.LastOrDefault().GetScoreGame())
+            if (statistic.Count == 0 || game.GetScoreGame() > statistic.LastOrDefault().GetScoreGame())
             {
                 statistic.Add(game);
                 statistic = statistic.OrderByDescending(t => t.GetScoreGame()).ToList();
@@ -918,7 +966,7 @@ namespace Miner
             if (name == null) throw new ArgumentNullException();
             AddStatistic(new ComplexityPlayedGame(new PlayedGame(name, score, time, date), complexity));
         }
-        public void ShowLiders(Complexity complexity)//отрисовка таблици лидеров
+        public void ShowLiders()//отрисовка таблици лидеров
         {
             Console.Clear();
             int i = 1;
