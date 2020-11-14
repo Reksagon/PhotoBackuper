@@ -98,9 +98,14 @@ namespace Miner
                                 {
                                     map.CurrentMines--;
                                     map[newCursor] = -2;
-                                    map.ReShowNumberMines();
-                                    map.WriteSymbol(newCursor);
                                 }
+                                else
+                                {
+                                    map.CurrentMines++;
+                                    map[newCursor] = 0;
+                                }
+                                map.ReShowNumberMines();
+                                map.WriteSymbol(newCursor);
                                 break;
                             case ConsoleKey.Spacebar://открыть ячейку
                                 if (firstMove)//если первый ход то растановка мин 
@@ -216,6 +221,11 @@ namespace Miner
                         {
                             map[point] = -2;
                             map.CurrentMines--;
+                        }
+                        else
+                        {
+                            map[point] = 0;
+                            map.CurrentMines++;
                         }
                         if (bombed)
                         {
