@@ -15,7 +15,8 @@ namespace Menu
         static List<string> Passwords = new List<string>(); // Пароль.
         static public void User() // Класс, который хранит регистрационные данные.
         {
-
+	    FileStream daa = new FileStream("meow.txt", FileMode.OpenOrCreate);
+            daa.Close();
             int count = File.ReadAllLines("meow.txt").Length;
             FileStream data = new FileStream("meow.txt", FileMode.Open);
             StreamReader all = new StreamReader(data);
@@ -36,7 +37,7 @@ namespace Menu
             {
                 string filename = "meow.txt";
 
-                FileStream data = new FileStream(filename, FileMode.OpenOrCreate);
+                FileStream data = new FileStream(filename, FileMode.Open);
                 StreamWriter log = new StreamWriter(data);
                 data.Seek(0, SeekOrigin.End);
                 Console.WriteLine("Введите логин:");
