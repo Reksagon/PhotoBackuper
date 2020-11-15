@@ -10,28 +10,93 @@ using System.Runtime.Serialization.Formatters.Binary;
 namespace Miner
 {
     public enum Complexity { newbie = 1, amatour, profesional, special }
+    public interface IStatistic
+    {
+        void Add(Complexity complexity, string name, int score, double time, DateTime date);
+        void ShowLiders();
+        void Save();
+        void Load();
+    }
+    public interface IScoreGame
+    {
+        void StartGame();//фиксация начала игры
+        void EndGame();//фиксация конца игры
+        double GetTimeGame(); //время в "с" затраченое на игру
+        int ScoreCount(Map map);//подсчет очков за игру
+    }
+    public interface IControlStrategy
+    {
+        void Start(IStatistic statistic, User currentUser, IScoreGame score);
+    }
+    public interface IAbstractFactoryMiner
+    {
+        IStatistic GetStatistic();
+        IScoreGame GetScoreGame();
+        IControlStrategy GetControlStrategy();
+    }
     public class Miner
     {
-        public int SizeMapHeight { get; set; }
-        public int SizeMapWidth { get; set; }
-        private Map mines;//'*' = -1 - mine, '^' = -2 - flag, -3 - empty cell (open), 0 - empty cell, 1,2,3,4,5,6,7,8 - numbers
-        private Map map;
         private IStatistic statistic;
-        private Complexity currentComplexity;
-        public int AmountOfMines { get; set; }
+        private IScoreGame score;
+        private IControlStrategy control;
         public User CurrentUser { get; protected set; }
-        public Miner(User user)
+        public Miner(User user, IAbstractFactoryMiner factory)
         {
-            SizeMapHeight = 9;
-            SizeMapWidth = 9;
-            AmountOfMines = 10;
             CurrentUser = user;
-            statistic = new SingleStatistic();
+            statistic = factory.GetStatistic();
             statistic.Load();
+            control = factory.GetControlStrategy();
+            score = factory.GetScoreGame();
         }
-        private void Initial()
+        public void Start() //основной метод для игры через стрелки
+        {
+            try
+            {
+                bool exit = false;
+                if (Menu.ChooseNewGameOrLiders() == 1) statistic.ShowLiders();
+                do
+                {
+                    control.Start(statistic, CurrentUser, score);
+                    Console.WriteLine("Нажмите клавишу для продолжения...");
+                    Console.ReadKey();
+                    exit = Exit();
+                } while (!exit);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            finally
+            {
+                statistic.Save();
+            }
+        }
+        private bool Exit()//выход
+        {
+            switch (Menu.ChooseExit())//меню выхода
+            {
+                case 1:
+                    statistic.ShowLiders();
+                    break;
+                case 2:
+                case -1:
+                    return true;
+            }
+            return false;
+        }
+    }
+    public abstract class AbstractControl : IControlStrategy
+    {
+        protected AbstractControl() { }
+        public abstract void Start(IStatistic statistic, User currentUser, IScoreGame score);
+        protected abstract bool OpenCell(Point point, Map map, Map mines);//открытие ячеек,если бомба, тогда возврат true
+        protected abstract void OpenCellWithNull(Point point, Map map, Map mines);//открытие всех пустых смежных ячеек
+        protected virtual void Initial(out Complexity currentComplexity, out Map map, out Map mines)
         {
             Console.Clear();
+            int SizeMapHeight;
+            int SizeMapWidth;
+            int AmountOfMines;
             currentComplexity = Menu.ChooseComplexity("\tНовая игра");
             switch (currentComplexity)
             {
@@ -61,217 +126,139 @@ namespace Miner
             mines = new Map(SizeMapHeight, SizeMapWidth, AmountOfMines);
             map = new Map(SizeMapHeight, SizeMapWidth, AmountOfMines);
         }
-        public void StartArrows() //основной метод для игры через стрелки
+        protected virtual void Show(Map map, User user)//базовая отрисовка игрового поля
         {
-            try
-            {
-                bool endGame = false;
-                bool bombed = false;
-                bool firstMove = true;
-                long startTime = 0;//логирование момента начала игры во времени
-                double time;//затраченое время на игру
-                int score;//заработаные очки
-                bool exit = false;
-                ConsoleKeyInfo key;
-                Point cursor;
-                Point newCursor;
-                if (Menu.ChooseNewGameOrLiders() == 0) statistic.ShowLiders();
-                do
-                {
-                    Initial();
-                    cursor = new Point();
-                    newCursor = new Point();
-                    endGame = false;
-                    bombed = false;
-                    firstMove = true;
-                    Show();
-                    ShowInfoCursor();
-                    map.SetCursor(newCursor);
-                    do
-                    {
-                        key = Console.ReadKey();
-                        switch (key.Key)
-                        {
-                            case ConsoleKey.Enter://поставить флаг
-                                if (map[newCursor] != -2)//защита от повторной установки флага
-                                {
-                                    map.CurrentMines--;
-                                    map[newCursor] = -2;
-                                }
-                                else
-                                {
-                                    map.CurrentMines++;
-                                    map[newCursor] = 0;
-                                }
-                                map.ReShowNumberMines();
-                                map.WriteSymbol(newCursor);
-                                break;
-                            case ConsoleKey.Spacebar://открыть ячейку
-                                if (firstMove)//если первый ход то растановка мин 
-                                {
-                                    startTime = SD.Stopwatch.GetTimestamp();
-                                    mines.InitialBombs(newCursor);
-                                    firstMove = false;
-                                }
-                                if (map[newCursor] == -2)//если на открываемой ячейке стоит флаг возвращаем число мин
-                                {
-                                    map.CurrentMines++;
-                                    map.ReShowNumberMines();
-                                }
-                                bombed = OpenCellCursor(newCursor);
-                                break;
-                            case ConsoleKey.LeftArrow://сдвиг указателя влево
-                                cursor = newCursor.Clone();
-                                newCursor.Letter--;
-                                if (!map.IsInBorder(newCursor)) newCursor = cursor;
-                                break;
-                            case ConsoleKey.RightArrow://сдвиг указателя вправо
-                                cursor = newCursor.Clone();
-                                newCursor.Letter++;
-                                if (!map.IsInBorder(newCursor)) newCursor = cursor;
-                                break;
-                            case ConsoleKey.UpArrow://сдвиг указателя вверх
-                                cursor = newCursor.Clone();
-                                newCursor.Number--;
-                                if (!map.IsInBorder(newCursor)) newCursor = cursor;
-                                break;
-                            case ConsoleKey.DownArrow://сдвиг указателя вниз
-                                cursor = newCursor.Clone();
-                                newCursor.Number++;
-                                if (!map.IsInBorder(newCursor)) newCursor = cursor;
-                                break;
-                            case ConsoleKey.Escape://выход
-                                endGame = true;
-                                Show();
-                                break;
-                            default:
-                                map.WriteSymbol(newCursor);
-                                break;
-                        }
-                        if (!endGame)
-                        {
-                            map.WriteSymbol(cursor);//повторная прорисовка зарисованой вводом ячейки
-                            map.SetCursor(newCursor);//перемещение курсора на новую позицию
-                        }
-                        if (bombed)//вывод результата поражения
-                        {
-                            Show();
-                            Console.WriteLine("Поражение!!!");
-                            Console.WriteLine($"Затраченое время {GetTimeGame(startTime):0.00} с...");
-                            endGame = true;
-                        }
-                        else if (CheckWin(map))//проверка победы, вывод результата
-                        {
-                            time = GetTimeGame(startTime);
-                            score = ScoreCount(time);
-                            CurrentUser.Score += score;
-                            statistic.Add(currentComplexity, CurrentUser.Name, score, time, DateTime.Now);
-                            Show();
-                            Console.WriteLine("Победа!!!");
-                            Console.WriteLine($"Затраченое время {time:0.00} с");
-                            Console.WriteLine($"Полученые очки {score}");
-                            endGame = true;
-                        }
-                    } while (!endGame);
-                    Console.WriteLine("Нажмите клавишу для продолжения...");
-                    Console.ReadKey();
-                    exit = Exit();
-                } while (!exit);
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            finally
-            {
-                statistic.Save();
-            }
+            Console.Clear();
+            user.Show(map.SizeMapWidth, map.SizeMapHeight);
+            map.Show();
         }
-        public void StartCoordinate()//основной метод для игры через координаты
+        protected virtual bool CheckWin(Map map)//проверка окончание игры победой
         {
-            try
+            int CountFlags = 0;
+            int CountEmptyCells = 0;
+            for (int i = 0; i < map.SizeMapHeight; i++)//проход всех ячеек
             {
-                bool endGame = false;
-                bool bombed = false;
-                Point point = new Point();
-                bool firstMove = true;
-                long startTime = 0;//логирование момента начала игры во времени
-                double time;//затраченое время на игру
-                int score;//заработаные очки
-                bool exit = false;
-                if (Menu.ChooseNewGameOrLiders() == 1) statistic.ShowLiders();
-                do
+                for (int j = 0; j < map.SizeMapWidth; j++)
                 {
-                    Initial();
-                    endGame = false;
-                    bombed = false;
-                    firstMove = true;
-                    do
+                    if (map[i, j] == -2)
                     {
-                        Show();
-                        point = Menu.EnterPoint(SizeMapHeight, SizeMapWidth);
-                        if (Menu.ChooseActionOnCell() == 0)
+                        CountFlags++;
+                    }
+                    else if (map[i, j] == 0)
+                    {
+                        CountEmptyCells++;
+                    }
+                }
+            }
+            if (CountFlags == map.AmountOfMines && CountEmptyCells == 0) return true;
+            return false;
+        }
+    }
+    public class ControlArrow : AbstractControl
+    {
+        public override void Start(IStatistic statistic, User currentUser, IScoreGame score) //основной метод для игры через стрелки
+        {
+            Map map;//'*' = -1 - mine, '^' = -2 - flag, -3 - empty cell (open), 0 - empty cell, 1,2,3,4,5,6,7,8 - numbers
+            Map mines;
+            bool endGame = false;
+            bool bombed = false;
+            bool firstMove = true;
+            ConsoleKeyInfo key;
+            Complexity currentComplexity;
+            Initial(out currentComplexity, out map, out mines);
+            Point cursor = new Point();
+            Point newCursor = new Point();
+            Show(map, currentUser);
+            ShowInfoCursor();
+            map.SetCursor(newCursor);
+            do
+            {
+                key = Console.ReadKey();
+                switch (key.Key)
+                {
+                    case ConsoleKey.Enter://поставить флаг
+                        if (map[newCursor] != -2)//защита от повторной установки флага
                         {
-                            if (firstMove)
-                            {
-                                startTime = SD.Stopwatch.GetTimestamp();
-                                mines.InitialBombs(point);
-                                firstMove = false;
-                            }
-                            if (map[point] == -2) map.CurrentMines++;
-                            bombed = OpenCell(point);
-                        }
-                        else if (map[point] != -2)//защита от повторной установки флага
-                        {
-                            map[point] = -2;
                             map.CurrentMines--;
+                            map[newCursor] = -2;
                         }
                         else
                         {
-                            map[point] = 0;
                             map.CurrentMines++;
+                            map[newCursor] = 0;
                         }
-                        if (bombed)
+                        map.ReShowNumberMines();
+                        map.WriteSymbol(newCursor);
+                        break;
+                    case ConsoleKey.Spacebar://открыть ячейку
+                        if (firstMove)//если первый ход то растановка мин 
                         {
-                            Show();
-                            Console.WriteLine("Поражение!!!");
-                            Console.WriteLine($"Затраченое время {GetTimeGame(startTime):0.00} с");
-                            endGame = true;
+                            score.StartGame();
+                            mines.InitialBombs(newCursor);
+                            firstMove = false;
                         }
-                        else if (CheckWin(map))
+                        if (map[newCursor] == -2)//если на открываемой ячейке стоит флаг возвращаем число мин
                         {
-                            time = GetTimeGame(startTime);
-                            score = ScoreCount(time);
-                            CurrentUser.Score += score;
-                            statistic.Add(currentComplexity, CurrentUser.Name, score, time, DateTime.Now);
-                            Show();
-                            Console.WriteLine("Победа!!!");
-                            Console.WriteLine($"Затраченое время {time:0.00} с");
-                            Console.WriteLine($"Полученые очки {score}");
-                            endGame = true;
+                            map.CurrentMines++;
+                            map.ReShowNumberMines();
                         }
-                    } while (!endGame);
-                    Console.WriteLine("Нажмите клавишу для продолжения...");
-                    Console.ReadKey();
-                    exit = Exit();
-                } while (!exit);
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            finally
-            {
-                statistic.Save();
-            }
+                        bombed = OpenCell(newCursor, map, mines);
+                        break;
+                    case ConsoleKey.LeftArrow://сдвиг указателя влево
+                        cursor = newCursor.Clone();
+                        newCursor.Letter--;
+                        if (!map.IsInBorder(newCursor)) newCursor = cursor;
+                        break;
+                    case ConsoleKey.RightArrow://сдвиг указателя вправо
+                        cursor = newCursor.Clone();
+                        newCursor.Letter++;
+                        if (!map.IsInBorder(newCursor)) newCursor = cursor;
+                        break;
+                    case ConsoleKey.UpArrow://сдвиг указателя вверх
+                        cursor = newCursor.Clone();
+                        newCursor.Number--;
+                        if (!map.IsInBorder(newCursor)) newCursor = cursor;
+                        break;
+                    case ConsoleKey.DownArrow://сдвиг указателя вниз
+                        cursor = newCursor.Clone();
+                        newCursor.Number++;
+                        if (!map.IsInBorder(newCursor)) newCursor = cursor;
+                        break;
+                    case ConsoleKey.Escape://выход
+                        endGame = true;
+                        Show(map, currentUser);
+                        break;
+                    default:
+                        map.WriteSymbol(newCursor);
+                        break;
+                }
+                if (!endGame)
+                {
+                    map.WriteSymbol(cursor);//повторная прорисовка зарисованой вводом ячейки
+                    map.SetCursor(newCursor);//перемещение курсора на новую позицию
+                }
+                if (bombed)//вывод результата поражения
+                {
+                    score.EndGame();
+                    Show(map, currentUser);
+                    Console.WriteLine("Поражение!!!");
+                    Console.WriteLine($"Затраченое время {score.GetTimeGame():0.00} с...");
+                    endGame = true;
+                }
+                else if (CheckWin(map))//проверка победы, вывод результата
+                {
+                    score.EndGame();
+                    currentUser.Score += score.ScoreCount(map);
+                    statistic.Add(currentComplexity, currentUser.Name, score.ScoreCount(map), score.GetTimeGame(), DateTime.Now);
+                    Show(map, currentUser);
+                    Console.WriteLine("Победа!!!");
+                    Console.WriteLine($"Затраченое время {score.GetTimeGame():0.00} с");
+                    Console.WriteLine($"Полученые очки {score.ScoreCount(map)}");
+                    endGame = true;
+                }
+            } while (!endGame);
         }
-        private void Show()//базовая отрисовка игрового поля
-        {
-            Console.Clear();
-            CurrentUser.Show(SizeMapWidth, SizeMapHeight);
-            map.Show();
-        }
-        private void ShowInfoCursor()
+        protected virtual void ShowInfoCursor()
         {
             Console.WriteLine("Управление:\n" +
                 "стрелки (вверх, вниз, влево, вправо) - движение по полю\n" +
@@ -279,20 +266,7 @@ namespace Miner
                 "enter - поставить флаг\n" +
                 "esc - выход");
         }
-        private double GetTimeGame(long startTime) => //время в "с" затраченое на игру
-            (SD.Stopwatch.GetTimestamp() - startTime) / (double)SD.Stopwatch.Frequency;
-
-        private bool OpenCell(Point point)//открытие ячеек,если бомба, тогда возврат true
-        {
-            map[point] = mines[point];
-            if (mines[point] == -1)
-            {
-                return true;
-            }
-            else if (mines[point] == 0) OpenCellWithNull(point);
-            return false;
-        }
-        private bool OpenCellCursor(Point point)//открытие ячеек,если бомба, тогда возврат true
+        protected override bool OpenCell(Point point, Map map, Map mines)//открытие ячеек,если бомба, тогда возврат true
         {
             map[point] = mines[point];
             map.WriteSymbol(point);
@@ -300,33 +274,10 @@ namespace Miner
             {
                 return true;
             }
-            else if (mines[point] == 0) OpenCellWithNullCursor(point);
+            else if (mines[point] == 0) OpenCellWithNull(point, map, mines);
             return false;
         }
-        private void OpenCellWithNull(Point point)//открытие всех пустых смежных ячеек
-        {
-            if (map[point] == -2)
-            {
-                map.CurrentMines++;
-            }
-            if (mines[point] == 0)
-            {
-                map[point] = -3;
-                mines[point] = -3;
-                for (int i = point.Number - 1; i < point.Number + 2; i++)
-                {
-                    for (int j = point.Letter - 1; j < point.Letter + 2; j++)
-                    {
-                        if (mines.IsInBorder(new Point(i, j)) && mines[new Point(i, j)] != -3) 
-                        {
-                            OpenCellWithNull(new Point(i, j));
-                        }
-                    }
-                }
-            }
-            map[point] = mines[point];
-        }
-        private void OpenCellWithNullCursor(Point point)//открытие всех пустых смежных ячеек
+        protected override void OpenCellWithNull(Point point, Map map, Map mines)//открытие всех пустых смежных ячеек
         {
             if (map[point] == -2)
             {
@@ -344,7 +295,7 @@ namespace Miner
                     {
                         if (mines.IsInBorder(new Point(i, j)) && mines[new Point(i, j)] != -3)
                         {
-                            OpenCellWithNullCursor(new Point(i, j));
+                            OpenCellWithNull(new Point(i, j), map, mines);
                         }
                     }
                 }
@@ -352,57 +303,130 @@ namespace Miner
             map[point] = mines[point];
             map.WriteSymbol(point);
         }
-        private bool CheckWin(Map map)//проверка окончание игры победой
+    }
+    
+    public class ControlCoordinate: AbstractControl
+    {
+        public override void Start(IStatistic statistic, User currentUser, IScoreGame score) //основной метод для игры через стрелки
         {
-            int CountFlags = 0;
-            int CountEmptyCells = 0;
-            for (int i = 0; i < SizeMapHeight; i++)//проход всех ячеек
+            Map map;//'*' = -1 - mine, '^' = -2 - flag, -3 - empty cell (open), 0 - empty cell, 1,2,3,4,5,6,7,8 - numbers
+            Map mines;
+            bool endGame = false;
+            bool bombed = false;
+            bool firstMove = true;
+            Complexity currentComplexity;
+            Initial(out currentComplexity, out map, out mines);
+            Point point = new Point();
+            do
             {
-                for (int j = 0; j < SizeMapWidth; j++)
+                Show(map, currentUser);
+                point = Menu.EnterPoint(map.SizeMapHeight, map.SizeMapWidth);
+                if (Menu.ChooseActionOnCell() == 0)
                 {
-                    if (map[i, j] == -2)
+                    if (firstMove)
                     {
-                        CountFlags++;
+                        score.StartGame();
+                        mines.InitialBombs(point);
+                        firstMove = false;
                     }
-                    else if(map[i, j] == 0)
+                    if (map[point] == -2) map.CurrentMines++;
+                    bombed = OpenCell(point, map, mines);
+                }
+                else if (map[point] != -2)//защита от повторной установки флага
+                {
+                    map[point] = -2;
+                    map.CurrentMines--;
+                }
+                else
+                {
+                    map[point] = 0;
+                    map.CurrentMines++;
+                }
+                if (bombed)//вывод результата поражения
+                {
+                    score.EndGame();
+                    Show(map, currentUser);
+                    Console.WriteLine("Поражение!!!");
+                    Console.WriteLine($"Затраченое время {score.GetTimeGame():0.00} с...");
+                    endGame = true;
+                }
+                else if (CheckWin(map))//проверка победы, вывод результата
+                {
+                    score.EndGame();
+                    currentUser.Score += score.ScoreCount(map);
+                    statistic.Add(currentComplexity, currentUser.Name, score.ScoreCount(map), score.GetTimeGame(), DateTime.Now);
+                    Show(map, currentUser);
+                    Console.WriteLine("Победа!!!");
+                    Console.WriteLine($"Затраченое время {score.GetTimeGame():0.00} с");
+                    Console.WriteLine($"Полученые очки {score.ScoreCount(map)}");
+                    endGame = true;
+                }
+            } while (!endGame);
+        }
+        protected override bool OpenCell(Point point, Map map, Map mines)//открытие ячеек,если бомба, тогда возврат true
+        {
+                map[point] = mines[point];
+                if (mines[point] == -1)
+                {
+                    return true;
+                }
+                else if (mines[point] == 0) OpenCellWithNull(point, map, mines);
+                return false;
+        }
+        protected override void OpenCellWithNull(Point point, Map map, Map mines)//открытие всех пустых смежных ячеек
+        {
+            if (map[point] == -2)
+            {
+                map.CurrentMines++;
+            }
+            if (mines[point] == 0)
+            {
+                map[point] = -3;
+                mines[point] = -3;
+                for (int i = point.Number - 1; i < point.Number + 2; i++)
+                {
+                    for (int j = point.Letter - 1; j < point.Letter + 2; j++)
                     {
-                        CountEmptyCells++;
+                        if (mines.IsInBorder(new Point(i, j)) && mines[new Point(i, j)] != -3)
+                        {
+                            OpenCellWithNull(new Point(i, j), map, mines);
+                        }
                     }
                 }
             }
-            if (CountFlags == map.AmountOfMines && CountEmptyCells == 0) return true;
-            return false;
+            map[point] = mines[point];
         }
-        private int ScoreCount(double time)//подсчет очков за игру
+    }
+    public class ScoreGame : IScoreGame
+    {
+        private long startTime;
+        private long endTime;
+        public ScoreGame()
         {
-            int score = (int)(200 * AmountOfMines / (double)SizeMapHeight / (double)SizeMapWidth);//очки за сложность
-            score += (int)(CountCellWithNumber() / (Math.Log(time)));//очки за время
+            startTime = 0;
+            endTime = 0;
+        }
+        public void StartGame() => startTime = SD.Stopwatch.GetTimestamp();
+        public void EndGame() => endTime = SD.Stopwatch.GetTimestamp();
+        public double GetTimeGame() => //время в "с" затраченое на игру
+            (endTime - startTime) / (double)SD.Stopwatch.Frequency;
+        public int ScoreCount(Map map)//подсчет очков за игру
+        {
+            int score = (int)(200 * map.AmountOfMines / (double)map.SizeMapHeight / (double)map.SizeMapWidth);//очки за сложность
+            score += (int)(CountCellWithNumber(map) / (Math.Log(GetTimeGame())));//очки за время
             return score;
         }
-        private int CountCellWithNumber()//подсчет ячеек с цифрами (для определения очков за время)
+        private int CountCellWithNumber(Map map)//подсчет ячеек с цифрами (для определения очков за время)
         {
             int count = 0;
-            for (int i = 0; i < SizeMapHeight; i++)
+            for (int i = 0; i < map.SizeMapHeight; i++)
             {
-                for (int j = 0; j < SizeMapWidth; j++)
+                for (int j = 0; j < map.SizeMapWidth; j++)
                 {
                     if (map[i, j] > 0) count++;
                 }
             }
             return count;
-        }
-        private bool Exit()//выход
-        {
-            switch (Menu.ChooseExit())//меню выхода
-            {
-                case 1:
-                    statistic.ShowLiders();
-                    break;
-                case 2:
-                case -1:
-                    return true;
-            }
-            return false;
         }
     }
     public class Map//поле игры
@@ -419,7 +443,7 @@ namespace Miner
             AmountOfMines = CurrentMines = amountOfMines;
             map = new int[SizeMapHeight, SizeMapWidth];
         }
-        public Map():this(9, 9, 10) { }
+        public Map() : this(9, 9, 10) { }
         public void InitialBombs(Point point)//point - координата первого хода //растановка бомб
         {
             Random rand = new Random();
@@ -487,14 +511,14 @@ namespace Miner
                 Console.WriteLine("|");
             }
             ShowHorizontalBorder();
-            Menu.ShowSpaces((SizeMapHeight.ToString().Length + SizeMapWidth * (2 + SizeMapWidth / 26) 
+            Menu.ShowSpaces((SizeMapHeight.ToString().Length + SizeMapWidth * (2 + SizeMapWidth / 26)
                 - 13 - AmountOfMines.ToString().Length) / 2);//отрисовка пробелов для центровки информации
             Console.WriteLine($"Оставшихся мин: {CurrentMines:00}\n");
         }
         public void ReShowNumberMines()//повторный показ колличества оставшихся мин (при управлении стрелками)
         {
             int number = 4 + SizeMapHeight;
-            int letter = (SizeMapHeight.ToString().Length + SizeMapWidth * (2 + SizeMapWidth / 26) 
+            int letter = (SizeMapHeight.ToString().Length + SizeMapWidth * (2 + SizeMapWidth / 26)
                 - 13 - AmountOfMines.ToString().Length) / 2 + 16;
             Console.SetCursorPosition(letter, number);
             Console.Write("{0:00}", CurrentMines);
@@ -541,7 +565,7 @@ namespace Miner
                 case -3:
                     return (char)183;//empty (open)
                 default:
-                    return (char) (positionMap + 48);//1,2,3,4,5,6,7,8
+                    return (char)(positionMap + 48);//1,2,3,4,5,6,7,8
             }
         }
         public int this[int i, int j]//доступ к ячейке поля
@@ -771,13 +795,7 @@ namespace Miner
             Console.WriteLine($"Игрок: {Name} очки: {Score}");
         }
     }
-    public interface IStatistic
-    {
-        void Add(Complexity complexity, string name, int score, double time, DateTime date);
-        void ShowLiders();
-        void Save();
-        void Load();
-    }
+    
     [Serializable]
     public class GradeStatistic : IStatistic//данные статистики игры
     {
@@ -1055,5 +1073,29 @@ namespace Miner
                     throw new NotImplementedException();
             }
         }
+    }
+    public class SingleStatControlArrowFactory : IAbstractFactoryMiner
+    {
+        public IStatistic GetStatistic() => new SingleStatistic();
+        public IScoreGame GetScoreGame() => new ScoreGame();
+        public IControlStrategy GetControlStrategy() => new ControlArrow();
+    }
+    public class GradeStatControlCoodrinateFactory : IAbstractFactoryMiner
+    {
+        public IStatistic GetStatistic() => new GradeStatistic();
+        public IScoreGame GetScoreGame() => new ScoreGame();
+        public IControlStrategy GetControlStrategy() => new ControlCoordinate();
+    }
+    public class SingleStatControlCoodrinateFactory : IAbstractFactoryMiner
+    {
+        public IStatistic GetStatistic() => new SingleStatistic();
+        public IScoreGame GetScoreGame() => new ScoreGame();
+        public IControlStrategy GetControlStrategy() => new ControlCoordinate();
+    }
+    public class GradeStatControlArrowFactory : IAbstractFactoryMiner
+    {
+        public IStatistic GetStatistic() => new GradeStatistic();
+        public IScoreGame GetScoreGame() => new ScoreGame();
+        public IControlStrategy GetControlStrategy() => new ControlArrow();
     }
 }
