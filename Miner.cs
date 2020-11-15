@@ -153,6 +153,19 @@ namespace Miner
             if (CountFlags == map.AmountOfMines && CountEmptyCells == 0) return true;
             return false;
         }
+        protected virtual void ShowMines(Map map, Map mines)
+        {
+            for (int i = 0; i < map.SizeMapHeight; i++)
+            {
+                for (int j = 0; j < map.SizeMapWidth; j++)
+                {
+                    if (map[i, j] == 0 && mines[i, j] == -1)
+                    {
+                        map[i, j] = -1;
+                    }
+                }
+            }
+        }
     }
     public class ControlArrow : AbstractControl
     {
@@ -240,6 +253,7 @@ namespace Miner
                 if (bombed)//вывод результата поражения
                 {
                     score.EndGame();
+                    ShowMines(map, mines);
                     Show(map, currentUser);
                     Console.WriteLine("Поражение!!!");
                     Console.WriteLine($"Затраченое время {score.GetTimeGame():0.00} с...");
@@ -345,6 +359,7 @@ namespace Miner
                 if (bombed)//вывод результата поражения
                 {
                     score.EndGame();
+                    ShowMines(map, mines);
                     Show(map, currentUser);
                     Console.WriteLine("Поражение!!!");
                     Console.WriteLine($"Затраченое время {score.GetTimeGame():0.00} с...");
