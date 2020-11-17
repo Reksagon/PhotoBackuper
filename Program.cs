@@ -1,415 +1,418 @@
 using System;
-using Menu;
-using System.IO;
-using System.Threading;
 using System.Collections.Generic;
+using System.Xml;
+using System.Linq;
+using static System.Console;
+using System.IO;
+using System.Text;
+using System.Threading;
 
-namespace Menu
+namespace SimpleProject
 {
-    public class Reg_and_auto
+    class Program
     {
-        static int q = 5;
-        static int a = 0;
-        static int b = 0;
-        static List<string> Logins = new List<string>(); // Логин.       
-        static List<string> Passwords = new List<string>(); // Пароль.
-        static public void User() // Класс, который хранит регистрационные данные.
+        public static string Path = "Users.xml";
+        
+
+
+        public class ConsoleHelper
         {
-            FileStream daa = new FileStream("meow.txt", FileMode.OpenOrCreate);
-            daa.Close();
-            int count = File.ReadAllLines("meow.txt").Length;
-            FileStream data = new FileStream("meow.txt", FileMode.Open);
-            StreamReader all = new StreamReader(data);
-            int i = 0;
-            while (i < count)
-            {
-                Logins.Add(all.ReadLine());
-                i++;
-                Passwords.Add(all.ReadLine());
-                i++;
-            }
-            all.Close();
-            data.Dispose();
-        }
-        static public class Log
+        public static int MultipleChoice(params string[] options)
         {
-            static public void Write()
-            {
-                string filename = "meow.txt";
-                FileStream data = new FileStream(filename, FileMode.Open);
-                StreamWriter log = new StreamWriter(data);
-                data.Seek(0, SeekOrigin.End);
-                Console.WriteLine("Введите логин:");
-                string text = Console.ReadLine();
-                prov_wr(text,data,log);
-                log.WriteLine(text);
-                log.Close();
-                data.Dispose();
-                Pass.Write();
-            }
-            static private void prov_wr(string text,FileStream data,StreamWriter log)
-            {
-                if (Logins.Contains(text))
-                {
+            int optionsPerLine = options.Length;
 
-                    Console.WriteLine("Такой логин уже есть!");
-                    log.Close();
-                    data.Dispose();
-                    Write();
-                }
-                else return;
 
-            }
-            static private void prov_re(string text)
-            {
+            int currentSelection = 0;
 
-		User();
-                if (Logins.Contains(text))
-                {
-                    a = Logins.IndexOf(text);
-                    return;
-                }
-                else {
+            ConsoleKey key;
 
-                    Console.WriteLine($"Неправильно введен логин! У вас есть {q} попыток!");
-                    q--;
-                    if (q == 0)
-                    { reg_or_auto(); }
-                    Reade(); 
-                    
-                }
-         
-            }
-            static public void Reade()
-            {
+            CursorVisible = false;
 
-                Console.WriteLine("Введите логин");
-                string text = Console.ReadLine();
-                prov_re(text);
-                q = 5;
-                Pass.Reade();
-            }
-        }
-        static class Pass
-        {
-            static public void Write()
-            {
-                string filename = "meow.txt";
-                FileStream data = new FileStream(filename, FileMode.OpenOrCreate);
-                StreamWriter pasw = new StreamWriter(data);
-                data.Seek(0, SeekOrigin.End);
-                Console.WriteLine("Введите пароль:");
-                string text = Console.ReadLine();
-                pasw.WriteLine(text);
-                pasw.Close();
-                data.Dispose();
-                Log.Reade();
-                //переход в основное меню
-            }
-            static private void prov(string text)
-            {
-                if (Passwords.Contains(text))
-                {
-                    b = Passwords.IndexOf(text);
-                }
-                if (b == a)
-                { return; }
-                else { q--; Console.WriteLine($"Неправильно введен пароль! У вас есть {q-1} попыток!"); 
-                    if (q == 0)
-                    { reg_or_auto(); }
-                    Reade();
-                    
-                }
-               
-
-            }
-            static public void Reade()
-            {
-                Console.WriteLine("Введите пароль: ");
-                string text = Console.ReadLine();
-                prov(text);
-
-                Menus.Meny();
-
-                //переход в основное меню
-            }
-        }
-        static public void reg_or_auto()
-        {
-            q = 5;
-            Menu_reg.Meny();
-        }
-    }
-    public class Menu_reg
-    {
-        delegate void method();
-        static public void Meny()
-        {
-            Reg_and_auto.User();
-            string[] items = { "Регистрация", "Авторизация", "Выход" };
-            method[] methods = new method[] { Method1, Method2, Exit };
-            ConsoleMenu menu = new ConsoleMenu(items);
-            int menuResult;
             do
             {
-                menuResult = menu.PrintMenu();
-                methods[menuResult]();
-                Console.WriteLine("Для продолжения нажмите любую клавишу");
-                Console.ReadKey();
-            } while (menuResult != items.Length - 1);
-        }
-        static void Method1()
-        {
-            Console.Beep(440, 300);
-            Reg_and_auto.Log.Write();
+                Clear();
+                    int maxlen = 0;
 
-
-        }
-        static void Method2()
-        {
-            Console.Beep(440, 300);
-            Reg_and_auto.Log.Reade();
-        }
-        static void Exit()
-        {
-            Console.Beep(440, 300);
-            Environment.Exit(0);
-
-        }
-        class ConsoleMenu
-        {
-            string[] menuItems;
-            int counter = 0;
-            public ConsoleMenu(string[] menuItems)
-            {
-                this.menuItems = menuItems;
-            }
-
-            public int PrintMenu()
-            {
-                ConsoleKeyInfo key;
-                do
-                {
-                    Console.Clear();
-                    for (int i = 0; i < menuItems.Length; i++)
+                    for (int i = 0; i < options.Length; i++)
                     {
-                        if (counter == i)
+                        if (options[i].Length > maxlen) maxlen = options[i].Length;
+                    }
+
+                    for (int i = 0; i < options.Length; i++)
+                    {
+                        if (i == currentSelection)
                         {
-                            Console.BackgroundColor = ConsoleColor.Cyan;
-                            Console.ForegroundColor = ConsoleColor.Black;
-                            Console.WriteLine(menuItems[i]);
-                            Console.BackgroundColor = ConsoleColor.Black;
-                            Console.ForegroundColor = ConsoleColor.White;
+                            ForegroundColor = ConsoleColor.Red;
+                            
                         }
-                        else
-                            Console.WriteLine(menuItems[i]);
+                        for (int j = 0; j < maxlen + 4; j++)
+                        {
+                            Write("+");
+                        }
+                        SetCursorPosition(CursorLeft - 1, CursorTop + 1);
+                        Write("+");
+                        SetCursorPosition(0, CursorTop + 1);
+                        for (int j = 0; j < maxlen + 4; j++)
+                        {
+                            Write("+");
+                        }
+                        SetCursorPosition(0, CursorTop - 1);
+                        Write("+");
+                        int a = (maxlen+4) - options[i].Length;
+                        int b = a / 2;
+                        SetCursorPosition(b-1, CursorTop);
+                        Write($" {options[i]}");
+                        SetCursorPosition(0, CursorTop + 2);
+                        ResetColor();
+                     }
 
-                    }
-                    key = Console.ReadKey();
-                    if (key.Key == ConsoleKey.UpArrow)
-                    {
-                        counter--;
-                        if (counter == -1) counter = menuItems.Length - 1;
-                    }
-                    if (key.Key == ConsoleKey.DownArrow)
-                    {
-                        counter++;
-                        if (counter == menuItems.Length) counter = 0;
-                    }
+                   key = ReadKey(true).Key;
+
+                   switch (key)
+                   {
+                        case ConsoleKey.UpArrow:
+                        {
+                            if (currentSelection > 0)
+                                currentSelection--;
+                                Beep(100, 100);
+                                break;
+                        }
+                        case ConsoleKey.DownArrow:
+                        {
+                            if (currentSelection < optionsPerLine - 1)
+                                currentSelection++;
+                                Beep(100, 100);
+                                break;
+
+                        }
                 }
-                while (key.Key != ConsoleKey.Enter);
-                return counter;
-            }
+            } while (key != ConsoleKey.Enter);
+                Beep(300, 100);
+                CursorVisible = true;
 
+            return currentSelection;
         }
     }
-    public class Menus
-    {
 
-        public static int x = 0;
-        private static string[,] polygon = new string[4, 4];
-        private static string[] tabs = new string[4] { "Snake ::", "Saper ::", "x/0 ::", "Exit ::" };
-        private static bool[] setts = new bool[4] { false, false, false, false }; //0 - snake; 1 - choto, 2, - x/o
-        public static void Render()
+        public class User
         {
-            for (int i = 0; i < 4; i++)
+            public string Login { get; set; }
+            delegate int LengthLogin(string s);
+            delegate bool BoolPassword(string s1, string s2);
+            public User() { }
+
+            public bool Enter(int attempts)
             {
-                for (int j = 0; j < 4; j++)
+                Clear();
+                if(attempts == 2) { ForegroundColor = ConsoleColor.Red; WriteLine("Осталось 2 попытки"); ResetColor(); }
+                if (attempts == 1) { ForegroundColor = ConsoleColor.Red; WriteLine("Осталось 1 попытка"); ResetColor(); }
+                var fileExists = File.Exists(Path);
+                if(!fileExists) 
                 {
-                    if (polygon[i, j] == tabs[i])
+                    ForegroundColor = ConsoleColor.Red;
+                    WriteLine("\t\t\tНет зарегестрированных пользователей! \n\t\t\tЧтобы войти сначала зарегистрируйтесь.");
+                    ResetColor();
+                    ReadLine();
+                    return false;
+                }
+
+                string pass = "";
+                Write("Введите логин: "); string name = ReadLine();
+                XmlTextReader reader = null;
+                try
+                {
+                    XmlDocument xDoc = new XmlDocument();
+                    xDoc.Load(Path);
+                    XmlElement xRoot = xDoc.DocumentElement;
+                    foreach (XmlElement xnode in xRoot)
                     {
-                        bool active = setts[i];
-                        Console.Write(polygon[i, j]);
-                        if (active)
+                        XmlNode attr = xnode.Attributes.GetNamedItem("Login");
+                        bool i = false;
+                        foreach (XmlNode childnode in xnode.ChildNodes)
                         {
-                            Console.ForegroundColor = ConsoleColor.Green;
-                            Console.Write(" ON");
-                            Console.ResetColor();
+                            if (childnode.Name == "Login" && childnode.InnerText == name)
+                            {
+                                this.Login = childnode.InnerText;
+                                i = true;
+                            }
+
+                            if (childnode.Name == "Password" && i == true)
+                            {
+                                pass = childnode.InnerText;
+                                i = false;
+                            }
                         }
-                        else
+                        
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    WriteLine(ex.Message);
+                }
+
+                Write("Введите пароль: ");
+            List<char> passChar = new List<char>();
+            while (true)
+            {
+                ConsoleKeyInfo cki = ReadKey(true);
+                if (cki.Key == ConsoleKey.Enter)
+                    break;
+                if(cki.Key == ConsoleKey.Backspace)
+                {
+                        if (passChar.Count > 0)
                         {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.Write(" OFF");
-                            Console.ResetColor();
+                            SetCursorPosition(CursorLeft - 1, CursorTop);
+                            Write(" ");
+                            SetCursorPosition(CursorLeft - 1, CursorTop);
+                            passChar.RemoveAt(passChar.Count - 1);
+                        }
+
+                }
+                else
+                {
+                    Write("*");
+                    passChar.Add(cki.KeyChar);
+                }
+            }
+            WriteLine();
+            string passStr = null;
+            foreach (char c in passChar)
+                passStr += c;
+                BoolPassword bp = (s1, s2) => s1 == s2;
+                if (bp(pass, passStr))
+                {
+                    WriteLine("Правильный пароль");
+                    ReadLine();
+                }
+                else
+                {
+                    if (attempts == 1)
+                    {
+                        ForegroundColor = ConsoleColor.Red;
+                        int i = 3;
+                        while (i != 0)
+                        {
+                            WriteLine($"Попыток больше нет. Твой комп сгорит через {i}");
+                            i--;
+                            Thread.Sleep(1000);
+                        }
+                        Environment.Exit(0);
+
+                    }
+                    else
+                    {
+                        ForegroundColor = ConsoleColor.Red;
+                        WriteLine("Неправильный логин или пароль! Попробуйте еще раз");
+                        ResetColor();
+                        ReadLine();
+                        attempts--;
+                        Enter(attempts);
+                    }
+                }
+
+                return true;
+            }
+            public string Set_Login()
+            {
+                Clear();
+                Write("Введите логин: ");
+                string login = ReadLine();
+                LengthLogin lengthLoginDelegate = s => s.Length;
+                int lengthLogin = lengthLoginDelegate(login);
+                if (lengthLogin > 10)
+                {
+                    ForegroundColor = ConsoleColor.Red;
+                    WriteLine("Слишком длинное имя. Максимум 10 символов!\n");
+                    ForegroundColor = ConsoleColor.White;
+                    ReadLine();
+                    Set_Login();
+                }
+                return login;
+
+            }
+            public string Set_Password()
+            {
+                Write("Введите пароль: ");
+                List<char> passChar1 = new List<char>();
+                List<char> passChar2 = new List<char>();
+                while (true)
+                {
+                    ConsoleKeyInfo cki = ReadKey(true);
+                    if (cki.Key == ConsoleKey.Enter)
+                        break;
+                    if (cki.Key == ConsoleKey.Backspace)
+                    {
+                        if (passChar1.Count > 0)
+                        {
+                            SetCursorPosition(CursorLeft - 1, CursorTop);
+                            Write(" ");
+                            SetCursorPosition(CursorLeft - 1, CursorTop);
+                            passChar1.RemoveAt(passChar1.Count - 1);
                         }
                     }
                     else
                     {
-                        Console.Write(polygon[i, j] + " ");
+                        Write("*");
+                        passChar1.Add(cki.KeyChar);
                     }
                 }
-                Console.WriteLine();
-            }
-        }
-        public static void Update(int dir, bool init)
-        {
-            if (!init)
-            {
-                int[] delta_x = new int[2] { -1, 1 };
-                int _X = delta_x[dir] + x;
-                if (_X > 3 || _X < 0)
-                    return;
-                polygon[x, 0] = "";
-                x = _X;
-                polygon[_X, 0] = "-->";
-            }
-            else
-            {
-                polygon[0, 1] = tabs[0];
-                polygon[1, 1] = tabs[1];
-                polygon[2, 1] = tabs[2];
-                polygon[3, 1] = tabs[3];
-            }
-            Console.Clear();
-            Render();
-            return;
-        }
-        public static void InitHacks()
-        {
-            while (true)
-            {
-                if (setts[0])
+                string password1 = null;
+                foreach (char c in passChar1)
+                    password1 += c;
+                Write("\nПовторите пароль: ");
+                while (true)
                 {
-                    Console.Beep(440, 300);
-                    //Snake
-
-                }
-                else if (setts[1])
-                {
-                    Console.Beep(440, 300);
-
-                    //2 Game
-                }
-                else if (setts[2])
-                {
-                    Console.Beep(440, 300);
-                    //3 Game
-
-                }
-
-                else if (setts[3])
-                {
-                    Console.Beep(440, 300);
-                    if (true)
+                    ConsoleKeyInfo cki = ReadKey(true);
+                    if (cki.Key == ConsoleKey.Enter)
+                        break;
+                    if (cki.Key == ConsoleKey.Backspace)
                     {
-                        Environment.Exit(0);
+                        if (passChar2.Count > 0)
+                        {
+                            SetCursorPosition(CursorLeft - 1, CursorTop);
+                            Write(" ");
+                            SetCursorPosition(CursorLeft - 1, CursorTop);
+                            passChar2.RemoveAt(passChar2.Count - 1);
+                        }
+
                     }
-                    //make Exit
+                    else
+                    {
+                        Write("*");
+                        passChar2.Add(cki.KeyChar);
+                    }
                 }
+                string password2 = null;
+                foreach (char c in passChar2)
+                    password2 += c;
+
+                BoolPassword bp = (s1, s2) => s1 == s2;
+                if(bp(password1,password2))
+                {
+                    return password1;
+                }
+                else
+                {
+                    ForegroundColor = ConsoleColor.Red;
+                    WriteLine("\nПароли не совпадают!\n Попробуйте еще раз.");
+                    ResetColor();
+                    Set_Password();
+                }
+                return "fail";
+            }
+            public void Registration()
+            {
+                string login = Set_Login();
+                string password = Set_Password();
+
+                var fileExists = File.Exists(Path);
+
+                if (fileExists)
+                {
+                    XmlDocument doc = new XmlDocument();
+                    doc.Load(Path);
+                    XmlNode root = doc.DocumentElement;
+
+                    XmlNode user = doc.CreateElement("User");
+                    XmlNode elem1 = doc.CreateElement("Login");
+                    XmlNode elem2 = doc.CreateElement("Password");
+                    XmlNode elem3 = doc.CreateElement("Sapper");
+                    XmlNode elem4 = doc.CreateElement("Snake");
+                    XmlNode elem5 = doc.CreateElement("XO");
+
+                    XmlNode text1 = doc.CreateTextNode(login);
+                    XmlNode text2 = doc.CreateTextNode(password);
+                    XmlNode text3 = doc.CreateTextNode("0");
+                    XmlNode text4 = doc.CreateTextNode("0");
+                    XmlNode text5 = doc.CreateTextNode("0");
+
+                    elem1.AppendChild(text1);
+                    elem3.AppendChild(text3);
+                    elem2.AppendChild(text2);
+                    elem4.AppendChild(text4);
+                    elem5.AppendChild(text5);
+
+                    user.AppendChild(elem1);
+                    user.AppendChild(elem2);
+                    user.AppendChild(elem3);
+                    user.AppendChild(elem4);
+                    user.AppendChild(elem5);
+
+                    root.AppendChild(user);
+
+                    doc.Save(Path);
+
+                    ForegroundColor = ConsoleColor.Green;
+                    WriteLine("\nРегистрация прошла успешно!\n");
+                    ResetColor();
+                    ReadLine();
+
+                }
+                else
+                {
+                    XmlTextWriter writer = null;
+                    try
+                    {
+                        writer = new XmlTextWriter(Path, System.Text.Encoding.Unicode);
+                        writer.Formatting = Formatting.Indented;
+                        writer.WriteStartDocument();
+                        writer.WriteStartElement("Users");
+                        writer.WriteStartElement("User");
+                        writer.WriteElementString("Login", login);
+                        writer.WriteElementString("Password", password);
+                        writer.WriteElementString("Sapper", "0");
+                        writer.WriteElementString("Snake", "0");
+                        writer.WriteElementString("XO", "0");
+                        writer.WriteEndElement();
+                        writer.WriteEndElement();
+
+                        ForegroundColor = ConsoleColor.Green;
+                        WriteLine("Регистрация прошла успешно!\n");
+                        ResetColor();
+                        ReadLine();
+
+                    }
+                    catch (Exception ex)
+                    {
+                        WriteLine(ex.Message);
+                    }
+                    finally
+                    {
+                        if (writer != null)
+                            writer.Close();
+                    }
+                }
+
 
 
             }
         }
-
-        public static void Meny()
-        {
-
-            Thread myThread = new Thread(new ThreadStart(Music));
-            myThread.Start(); // запускаем поток
-            Console.CursorVisible = false;
-            Console.SetWindowPosition(0, 0);
-            Console.Title = "Menu";
-            polygon[0, 0] = "-->";
-            Thread th = new Thread(InitHacks);
-            Update(0, true);
-            th.Start();
-            while (true)
+    
+            static void Main()
             {
-                var key = Console.ReadKey().Key;
-                if (key == ConsoleKey.UpArrow)
+            WindowWidth = 100;
+            WindowHeight = 20;
+            User user = new User();
+            bool enter = false;
+            while (enter == false)
+            {
+                int select = ConsoleHelper.MultipleChoice("Вход", "Зарегистрироваться");
+
+                switch (select)
                 {
-                    Update(0, false);
-                }
-                else if (key == ConsoleKey.DownArrow)
-                {
-                    Update(1, false);
-                }
-                else if (key == ConsoleKey.Enter)
-                {
-                    setts[x] = !setts[x];
-                    Update(2, true);
+                    case 0: 
+                        enter = user.Enter(3);
+                        break;
+                    case 1:
+                        user.Registration();
+                        break;
 
                 }
             }
-        }
-        private static void Music()
-        {
-            for (int i = 1; i < 9; i++)
-            {
-                Console.Beep(784, 150);
-                Thread.Sleep(300);
-                Console.Beep(784, 150);
-                Thread.Sleep(300);
-                Console.Beep(932, 150);
-                Thread.Sleep(150);
-                Console.Beep(1047, 150);
-                Thread.Sleep(150);
-                Console.Beep(784, 150);
-                Thread.Sleep(300);
-                Console.Beep(784, 150);
-                Thread.Sleep(300);
-                Console.Beep(699, 150);
-                Thread.Sleep(150);
-                Console.Beep(740, 150);
-                Thread.Sleep(150);
-                Console.Beep(784, 150);
-                Thread.Sleep(300);
-                Console.Beep(784, 150);
-                Thread.Sleep(300);
-                Console.Beep(932, 150);
-                Thread.Sleep(150);
-                Console.Beep(1047, 150);
-                Thread.Sleep(150);
-                Console.Beep(784, 150);
-                Thread.Sleep(300);
-                Console.Beep(784, 150);
-                Thread.Sleep(300);
-                Console.Beep(699, 150);
-                Thread.Sleep(150);
-                Console.Beep(740, 150);
-                Thread.Sleep(150);
-                Console.Beep(932, 150);
-                Console.Beep(784, 150);
-                Console.Beep(587, 1200);
-                Thread.Sleep(75);
-                Console.Beep(932, 150);
-                Console.Beep(784, 150);
-                Console.Beep(554, 1200);
-                Thread.Sleep(75);
-                Console.Beep(932, 150);
-                Console.Beep(784, 150);
-                Console.Beep(523, 1200);
-                Thread.Sleep(150);
-                Console.Beep(466, 150);
-                Console.Beep(523, 150);
-            }
+            
+
         }
     }
 }
-    class Program
-    {
-        static void Main()
-        {
-            Menu_reg.Meny();
-        }
-    }
+
