@@ -953,7 +953,7 @@ namespace Miner
         }
         public void Load()
         {
-            if (Directory.Exists("data") && File.Exists("data\\miner.bin"))
+            if (Directory.Exists("data"))
             {
                 BinaryFormatter bf = new BinaryFormatter();
                 newbie = Load("data\\minerNewbie.bin", bf);
@@ -1063,8 +1063,8 @@ namespace Miner
         protected PlayedGameDecorator(IPlayedGame playedGame) =>
             this.playedGame = playedGame;
         public override string ToString() => playedGame.ToString();
-        public int GetScoreGame() => playedGame.GetScoreGame();
-        public double GetTimeGame() => playedGame.GetTimeGame();
+        public virtual int GetScoreGame() => playedGame.GetScoreGame();
+        public virtual double GetTimeGame() => playedGame.GetTimeGame();
     }
     [Serializable]
     public class ComplexityPlayedGame : PlayedGameDecorator
