@@ -1,140 +1,196 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace TicTacToe
 {
 	class Program
 	{
+		delegate void method();
 		static void Main(string[] args)
 		{
-			var stillPlaying = true;
-
 			Console.ForegroundColor = ConsoleColor.Green;
-			Console.WriteLine("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-			Console.WriteLine("\tКРЕСТИКИ НОЛИКИ!");
-			Console.WriteLine("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+			Console.WriteLine(".-----. _         .-----.             .-----.            ");
+			Console.WriteLine("`-. .-':_;        `-. .-'             `-. .-'            ");
+			Console.WriteLine("  : :  .-. .--.     : : .--.   .--.     : : .--.  .--.   ");
+			Console.WriteLine("  : :  : :'  ..'    : :' .; ; '  ..'    : :' .; :' '_.'  ");
+			Console.WriteLine("  :_;  :_;`.__.'    :_;`.__,_;`.__.'    :_;`.__.'`.__.'  ");
 			Console.ResetColor();
-
-			while (stillPlaying)
-			{
-				Console.ForegroundColor = ConsoleColor.Cyan;
-				Console.WriteLine("\t       МЕНЮ:");
-				Console.WriteLine("     1. Начать новую игру");
-				Console.WriteLine("     2. Статистика");
-				Console.WriteLine("     3. Выход\n");
-				
-				Console.Write("     Ввод: ");
-				Console.ForegroundColor = ConsoleColor.Red;
-				var choice = Input("[123]");
-				Console.ResetColor();
-
-				switch (choice)
-				{
-					case "1":
-						PlayGame();
-						Console.Clear();
-						break;
-					case "2":
-						Statistics();
-						break;
-					case "3":
-						stillPlaying = false;
-						break;
-				}
-			}
+			StarWars();
+			Start();
 		}
+
+		
 		static int count = 0; // кол-во игр
 		static int x_win = 0; // кол-во побед х
 		static int o_win = 0; // кол-во обед о
 		static int x_pts = 0; // кол-во птс
 		static int o_pts = 0; // кол-во птс
-		private static string Input(string valid = null)
-		{
-			var input = Console.ReadLine();
-			input = input.Trim();
-
-			if (valid != null && !System.Text.RegularExpressions.Regex.IsMatch(input, valid))
-			{
-				Console.ForegroundColor = ConsoleColor.Red;
-				Console.WriteLine("\tСделайте правильный выбор!\n");
-				Console.ResetColor();
-				return null;
-			}
-			return input;
-		}
-
+		static int y = 0; // коеф птс за победу
 		private static void PlayGame()
 		{
 			string Rows = null;
 			while (Rows == null)
 			{
-				Console.Clear();
-				Console.ForegroundColor = ConsoleColor.Yellow;
-				Console.WriteLine("\tУРОВНИ СЛОЖНОСТИ");
-				Console.WriteLine("   1. Обычный (3х3)\n   2. Средний (4х4)\n   3. Высокий (5х5)\n");
-				Console.Write("   Выберите уровень сложности: ");
-				Console.ForegroundColor = ConsoleColor.Red;
-				Rows = Input("[123]");
-				Console.ResetColor();
+				string[] items = { "Обычный (3х3)", "Средний (4х4)", "Высокий (5х5)", "Назад"};
+				method[] methods = new method[] { Usual, Middle, Complicated, Back};
+				ConsoleMenu menu = new ConsoleMenu(items);
+				int menuResult;
+				do
+				{
+					menuResult = menu.PrintMenu();
+					methods[menuResult]();
+				}
+				while (menuResult != items.Length - 1);
 			}
-			var boardSize = (int)Math.Pow(int.Parse(Rows)+2, 2);
-			var board = new string[boardSize];
-			
-			var move = "X";
-			while (true)
+			var boardSize = 0;
+			void Usual()
 			{
-				Console.Clear();
+				boardSize = (int)Math.Pow(int.Parse("3"), 2);
+				y = 9;
+				Game();
+			}
+			void Middle()
+			{
+				boardSize = (int)Math.Pow(int.Parse("4"), 2);
+				y = 16;
+				Game();
+			}
+			void Complicated()
+			{
+				boardSize = (int)Math.Pow(int.Parse("5"), 2);
+				y = 25;
+				Game();
+			}
+			void Back()
+			{
+				Start();
+			}
+
+			void Game()
+			{
+				Random rnd = new Random();
 				
-				var winner = Win(board);
-				if (winner != null)
+				var board = new string[boardSize];
+				var move = "X";
+				while (true)
 				{
-					count++;
-					if (winner[0] == 'X')
+					Console.Clear();
+
+					var winner = Win(board);
+					if (winner != null)
 					{
-						x_win++;
-						x_pts += 10;
-						
+						count++;
+						if (winner[0] == 'X')
+						{
+							x_win++;
+							x_pts += y;
+
+						}
+						else if (winner[0] == 'O')
+						{
+							o_win++;
+							o_pts += y;
+						}
+						Result("\t" + winner[0] + " ПОБЕДА!!!", board);
+						break;
 					}
-					else if (winner[0] == 'O')
+					if (Draw(board))
 					{
-						o_win++;
-						o_pts += 10;
+						count++;
+						x_pts += 5;
+						o_pts += 5;
+						Result("\tНИЧЬЯ!!!", board);
+						break;
 					}
-					Result("\t" + winner[0] + " ПОБЕДА!!!", board);
-					break;
+
+
+					if (move == "X")
+					{
+						Console.ForegroundColor = ConsoleColor.Green;
+						Console.WriteLine("Ваш ход:");
+						Console.ResetColor();
+
+						DrawBoard(board);
+
+						var XO = GetXOLocation(board);
+						board[XO] = move;
+					}
+
+					if (move == "O")
+					{
+						while (true)
+						{
+
+							var XO = rnd.Next(0, y);
+							if (board[XO] == null)
+							{
+								board[XO] = move;
+								break;
+							}
+						}
+					}
+					move = move == "O" ? "X" : "O";
 				}
-				if (Draw(board))
-				{
-					count++;
-					x_pts += 5;
-					o_pts += 5;
-					Result("\tНИЧЬЯ!!!", board);
-					break;
-				}
-				Console.ForegroundColor = ConsoleColor.Green;
-				Console.WriteLine("     Ход " + move + ":");
-				Console.ResetColor();
-
-				DrawBoard(board);
-
-				Console.ForegroundColor = ConsoleColor.Green;
-				Console.WriteLine("Сделайте свой ход");
-				Console.ResetColor();
-
-				var XO = GetXOLocation(board);
-				board[XO] = move;
-
-				move = move == "X" ? "O" : "X";
 			}
 		}
+		private static void Start()
+		{
+			var stillPlaying = true;
+			while (stillPlaying)
+			{
+				string[] items = { "Начать новую игру", "Статистика", "Выход" };
+				method[] methods = new method[] { Method1, Method2, Exit };
+				ConsoleMenu menu = new ConsoleMenu(items);
+				int menuResult;
+				do
+				{
+					menuResult = menu.PrintMenu();
+					methods[menuResult]();
+				} while (menuResult != items.Length - 1);
+				void Method1()
+				{
+					PlayGame();
+				}
+				void Method2()
+				{
+					Statistics();
+				}
+				void Exit() // НЕ ХОЧЕТ ВЫХОДИТЬ
+				{
+					stillPlaying = false;
+				}
+			}
+
+		}
+		private static void StarWars()
+		{
+			Console.Beep(300, 500);
+			Thread.Sleep(50);
+			Console.Beep(300, 500);
+			Thread.Sleep(50);
+			Console.Beep(300, 500);
+			Thread.Sleep(50);
+			Console.Beep(250, 500);
+			Thread.Sleep(50);
+			Console.Beep(350, 250);
+			Console.Beep(300, 500);
+			Thread.Sleep(50);
+			Console.Beep(250, 500);
+			Thread.Sleep(50);
+			Console.Beep(350, 250);
+			Console.Beep(300, 500);
+			Thread.Sleep(50);
+		}
+
 		private static void Statistics()
 		{
 			Console.Clear();
 			Console.ForegroundColor = ConsoleColor.Magenta;
-			Console.WriteLine("       Всего игр: " + count);
-			Console.WriteLine("       Побед Х: " + x_win + " = " + x_pts + " очков");
-			Console.WriteLine("       Побед О: " + o_win + " = " + o_pts + " очков");
+			Console.WriteLine("Всего игр: " + count);
+			Console.WriteLine("Побед Х: " + x_win + " = " + x_pts + " очков");
+			Console.WriteLine("Побед О: " + o_win + " = " + o_pts + " очков");
 			Console.Write("Нажмите любую клавишу...");
 			Console.ResetColor();
 			Console.CursorVisible = false;
@@ -159,6 +215,7 @@ namespace TicTacToe
 
 		private static int GetXOLocation(string[] board)
 		{
+			
 			int numRows = (int)Math.Sqrt(board.Length);
 
 			int curRow = 0, curCol = 0;
@@ -172,7 +229,7 @@ namespace TicTacToe
 					break;
 				}
 			}
-
+			
 			while (true)
 			{
 				Console.SetCursorPosition(curCol * 4 + 2, curRow * 4 + 3);
@@ -314,12 +371,58 @@ namespace TicTacToe
 				if (hasTicTacToe)
 				{
 					for (int j = 0; j < row; j++)
-						board[j* row + (row - 1 - j)] += "!";
+						board[j * row + (row - 1 - j)] += "!";
 					return board[row - 1];
 				}
 			}
 
 			return null;
 		}
+	}
+	class ConsoleMenu
+	{
+		string[] menuItems;
+		int counter = 0;
+		public ConsoleMenu(string[] menuItems)
+		{
+			this.menuItems = menuItems;
+		}
+
+		public int PrintMenu()
+		{
+			ConsoleKeyInfo key;
+			do
+			{
+				Console.Clear();
+				for (int i = 0; i < menuItems.Length; i++)
+				{
+					if (counter == i)
+					{
+						Console.BackgroundColor = ConsoleColor.Yellow;
+						Console.ForegroundColor = ConsoleColor.Black;
+						Console.WriteLine(menuItems[i]);
+						Console.BackgroundColor = ConsoleColor.Black;
+						Console.ForegroundColor = ConsoleColor.White;
+					}
+					else
+						Console.WriteLine(menuItems[i]);
+
+				}
+				key = Console.ReadKey();
+				if (key.Key == ConsoleKey.UpArrow)
+				{
+					counter--;
+					if (counter == -1) counter = menuItems.Length - 1;
+				}
+				if (key.Key == ConsoleKey.DownArrow)
+				{
+					counter++;
+					if (counter == menuItems.Length) counter = 0;
+				}
+			}
+			while (key.Key != ConsoleKey.Enter);
+			return counter;
+		}
+
 	}
 }
