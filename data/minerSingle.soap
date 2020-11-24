@@ -1,0 +1,162 @@
+<SOAP-ENV:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:clr="http://schemas.microsoft.com/soap/encoding/clr/1.0" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<SOAP-ENV:Body>
+<SOAP-ENC:Array SOAP-ENC:arrayType="a1:IPlayedGame[2]" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<item href="#ref-3"/>
+<item href="#ref-4"/>
+</SOAP-ENC:Array>
+<a1:PlayedGame id="ref-3" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-5">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>11</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>1.6882659</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-24T21:16:37.6334770+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+<a1:PlayedGame id="ref-4" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField href="#ref-5"/>
+<_x003C_ScoreGame_x003E_k__BackingField>7</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>3.9361912</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-24T21:16:11.3704655+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+>
+</a1:ComplexityPlayedGame>
+<a1:ComplexityPlayedGame id="ref-6" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<complexity>newbie</complexity>
+<playedGame href="#ref-16"/>
+<PlayedGameDecorator_x002B_playedGame href="#ref-16"/>
+</a1:ComplexityPlayedGame>
+<a1:ComplexityPlayedGame id="ref-7" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<complexity>newbie</complexity>
+<playedGame href="#ref-17"/>
+<PlayedGameDecorator_x002B_playedGame href="#ref-17"/>
+</a1:ComplexityPlayedGame>
+<a1:ComplexityPlayedGame id="ref-8" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<complexity>newbie</complexity>
+<playedGame href="#ref-18"/>
+<PlayedGameDecorator_x002B_playedGame href="#ref-18"/>
+</a1:ComplexityPlayedGame>
+<a1:ComplexityPlayedGame id="ref-9" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<complexity>newbie</complexity>
+<playedGame href="#ref-19"/>
+<PlayedGameDecorator_x002B_playedGame href="#ref-19"/>
+</a1:ComplexityPlayedGame>
+<a1:ComplexityPlayedGame id="ref-10" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<complexity>newbie</complexity>
+<playedGame href="#ref-20"/>
+<PlayedGameDecorator_x002B_playedGame href="#ref-20"/>
+</a1:ComplexityPlayedGame>
+<a1:ComplexityPlayedGame id="ref-11" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<complexity>special</complexity>
+<playedGame href="#ref-21"/>
+<PlayedGameDecorator_x002B_playedGame href="#ref-21"/>
+</a1:ComplexityPlayedGame>
+<a1:ComplexityPlayedGame id="ref-12" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<complexity>special</complexity>
+<playedGame href="#ref-22"/>
+<PlayedGameDecorator_x002B_playedGame href="#ref-22"/>
+</a1:ComplexityPlayedGame>
+<a1:PlayedGame id="ref-13" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-23">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>58</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>268.1522415</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-15T18:40:10.4155452+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+<a1:PlayedGame id="ref-14" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-24">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>37</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>40.6802964</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-14T20:54:16.7636405+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+<a1:PlayedGame id="ref-15" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-25">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>36</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>1.2243364</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-14T22:15:34.4356938+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+<a1:PlayedGame id="ref-16" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-26">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>35</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>38.730233</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-15T16:39:52.4940744+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+<a1:PlayedGame id="ref-17" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-27">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>35</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>31.2616803</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-15T16:58:11.4720775+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+<a1:PlayedGame id="ref-18" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField href="#ref-23"/>
+<_x003C_ScoreGame_x003E_k__BackingField>35</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>31.3256434</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-15T18:33:23.8158132+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+<a1:PlayedGame id="ref-19" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-28">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>34</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>95.080194</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-14T21:09:29.8907148+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+<a1:PlayedGame id="ref-20" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-29">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>34</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>64.9603553</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-15T16:17:03.1030785+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+<a1:PlayedGame id="ref-21" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-30">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>31</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>1.3843418</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-14T22:02:21.1956906+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+<a1:PlayedGame id="ref-22" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-31">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>10</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>25.2558702</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-14T22:36:36.1156926+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+ll">
+<complexity>newbie</complexity>
+<playedGame href="#ref-3"/>
+<PlayedGameDecorator_x002B_playedGame href="#ref-3"/>
+</a1:ComplexityPlayedGame>
+<a1:PlayedGame id="ref-3" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-4">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>34</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>64.9603553</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-15T16:17:03.1030785+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+<SOAP-ENV:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:clr="http://schemas.microsoft.com/soap/encoding/clr/1.0" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<SOAP-ENV:Body>
+<a1:ComplexityPlayedGame id="ref-1" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<complexity>special</complexity>
+<playedGame href="#ref-3"/>
+<PlayedGameDecorator_x002B_playedGame href="#ref-3"/>
+</a1:ComplexityPlayedGame>
+<a1:PlayedGame id="ref-3" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-4">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>31</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>1.3843418</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-14T22:02:21.1956906+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+<SOAP-ENV:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:clr="http://schemas.microsoft.com/soap/encoding/clr/1.0" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<SOAP-ENV:Body>
+<a1:ComplexityPlayedGame id="ref-1" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<complexity>special</complexity>
+<playedGame href="#ref-3"/>
+<PlayedGameDecorator_x002B_playedGame href="#ref-3"/>
+</a1:ComplexityPlayedGame>
+<a1:PlayedGame id="ref-3" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-4">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>10</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>25.2558702</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-14T22:36:36.1156926+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

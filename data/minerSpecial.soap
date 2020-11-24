@@ -1,0 +1,20 @@
+<SOAP-ENV:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:clr="http://schemas.microsoft.com/soap/encoding/clr/1.0" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<SOAP-ENV:Body>
+<SOAP-ENC:Array SOAP-ENC:arrayType="a1:IPlayedGame[2]" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<item href="#ref-3"/>
+<item href="#ref-4"/>
+</SOAP-ENC:Array>
+<a1:PlayedGame id="ref-3" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField id="ref-5">User</_x003C_NamePlayer_x003E_k__BackingField>
+<_x003C_ScoreGame_x003E_k__BackingField>8</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>3.2482722</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-24T21:19:17.3624668+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+<a1:PlayedGame id="ref-4" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/Miner/Miner%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<_x003C_NamePlayer_x003E_k__BackingField href="#ref-5"/>
+<_x003C_ScoreGame_x003E_k__BackingField>7</_x003C_ScoreGame_x003E_k__BackingField>
+<_x003C_TimeGame_x003E_k__BackingField>1.7443466</_x003C_TimeGame_x003E_k__BackingField>
+<_x003C_Date_x003E_k__BackingField>2020-11-24T21:19:00.3704683+02:00</_x003C_Date_x003E_k__BackingField>
+</a1:PlayedGame>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
