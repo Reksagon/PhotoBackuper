@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SD = System.Diagnostics;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization.Formatters.Soap;
 
 namespace Miner
 {
@@ -33,6 +33,11 @@ namespace Miner
         IStatistic GetStatistic();
         IScoreGame GetScoreGame();
         IControlStrategy GetControlStrategy();
+    }
+    public interface IPlayedGame
+    {
+        int GetScoreGame();
+        double GetTimeGame();
     }
     public class Miner
     {
@@ -938,37 +943,37 @@ namespace Miner
         public void Save()
         {
             if (!Directory.Exists("data")) Directory.CreateDirectory("data");
-            BinaryFormatter bf = new BinaryFormatter();
-            Save(newbie, "data\\minerNewbie.bin", bf);
-            Save(amateur, "data\\minerAmateur.bin", bf);
-            Save(professional, "data\\minerProfessional.bin", bf);
-            Save(special, "data\\minerSpecial.bin", bf);
+            SoapFormatter sf = new SoapFormatter();
+            Save(newbie, "data\\minerNewbie.soap", sf);
+            Save(amateur, "data\\minerAmateur.soap", sf);
+            Save(professional, "data\\minerProfessional.soap", sf);
+            Save(special, "data\\minerSpecial.soap", sf);
         }
-        private void Save(List<IPlayedGame> list, string path, BinaryFormatter bf)
+        private void Save(List<IPlayedGame> list, string path, SoapFormatter sf)
         {
             using (Stream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
             {
-                bf.Serialize(fs, list);
+                sf.Serialize(fs, list.ToArray());
             }
         }
         public void Load()
         {
             if (Directory.Exists("data"))
             {
-                BinaryFormatter bf = new BinaryFormatter();
-                newbie = Load("data\\minerNewbie.bin", bf);
-                amateur = Load("data\\minerAmateur.bin", bf);
-                professional = Load("data\\minerProfessional.bin", bf);
-                special = Load("data\\minerSpecial.bin", bf);
+                SoapFormatter sf = new SoapFormatter();
+                newbie = Load("data\\minerNewbie.soap", sf);
+                amateur = Load("data\\minerAmateur.soap", sf);
+                professional = Load("data\\minerProfessional.soap", sf);
+                special = Load("data\\minerSpecial.soap", sf);
             }
         }
-        private List<IPlayedGame> Load(string path, BinaryFormatter bf)
+        private List<IPlayedGame> Load(string path, SoapFormatter sf)
         {
             if (File.Exists(path))
             {
                 using (Stream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
                 {
-                    return bf.Deserialize(fs) as List<IPlayedGame>;
+                    return (sf.Deserialize(fs) as IPlayedGame[]).ToList<IPlayedGame>();
                 }
             }
             else return new List<IPlayedGame>();
@@ -1014,28 +1019,23 @@ namespace Miner
         public void Save()
         {
             if (!Directory.Exists("data")) Directory.CreateDirectory("data");
-            BinaryFormatter bf = new BinaryFormatter();
-            using(Stream fs=new FileStream("data\\minerSingle.bin", FileMode.OpenOrCreate, FileAccess.Write))
+            SoapFormatter sf = new SoapFormatter();
+            using (Stream fs = new FileStream("data\\minerSingle.soap", FileMode.OpenOrCreate, FileAccess.Write))
             {
-                bf.Serialize(fs, statistic);
+                sf.Serialize(fs, statistic.ToArray());
             }
         }
         public void Load()
         {
-            if (Directory.Exists("data") && File.Exists("data\\minerSingle.bin"))
+            if (Directory.Exists("data") && File.Exists("data\\minerSingle.soap"))
             {
-                BinaryFormatter bf = new BinaryFormatter();
-                using (Stream fs = new FileStream("data\\minerSingle.bin", FileMode.Open, FileAccess.Read))
+                SoapFormatter sf = new SoapFormatter();
+                using (Stream fs = new FileStream("data\\minerSingle.soap", FileMode.Open, FileAccess.Read))
                 {
-                    statistic = bf.Deserialize(fs) as List<IPlayedGame>;
+                    statistic.AddRange((sf.Deserialize(fs) as IPlayedGame[]));
                 }
             }
         }
-    }
-    public interface IPlayedGame
-    {
-        int GetScoreGame();
-        double GetTimeGame();
     }
     [Serializable]
     public class PlayedGame : IPlayedGame
